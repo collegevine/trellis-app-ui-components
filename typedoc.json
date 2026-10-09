@@ -1,7 +1,11 @@
 {
   "$schema": "https://typedoc.org/schema.json",
-  "plugin": ["typedoc-plugin-markdown"],
-  "entryPoints": ["src/index.ts"],
+  "plugin": [
+    "typedoc-plugin-markdown"
+  ],
+  "entryPoints": [
+    "src/index.ts"
+  ],
   "out": "docs",
   "readme": "none",
   "excludeExternals": true,
@@ -9,5 +13,9 @@
   "outputFileStrategy": "modules",
   "useCodeBlocks": true,
   "hideBreadcrumbs": true,
-  "hidePageHeader": true
+  "hidePageHeader": true,
+  "groupOrder": [
+    "Functions",
+    "*"
+  ]
 }
