@@ -7,7 +7,7 @@ export {
   type ButtonProps,
   type ButtonSize,
   type ButtonStyleProps,
-  type ButtonVariantsOptions,
   type ButtonVariant,
+  type ButtonVariantsOptions,
 } from "./components/button.js"
 export { Link, type LinkProps } from "./components/link.js"
