@@ -11,3 +11,4 @@ export {
   type ButtonVariantsOptions,
 } from "./components/button.js"
 export { Link, type LinkProps } from "./components/link.js"
+export { Toaster, toast, type ToasterProps } from "./components/toaster.js"
