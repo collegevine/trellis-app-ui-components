@@ -8,44 +8,6 @@ import { Link as RouterLink } from "react-router"
 import { cn } from "../lib/utils.js"
 import { linkStyles } from "./link.js"
 
-/**
- * The button's look.
- *
- * - `default`: filled with the primary color.
- * - `outline`: a border on the page background, filled with the muted color on hover.
- * - `secondary`: filled with the secondary color.
- * - `ghost`: no fill and no border until hover.
- * - `destructive`: a light fill and text in the destructive color.
- * - `link`: the {@link Link} component's look.
- */
-export type ButtonVariant =
-  | "default"
-  | "outline"
-  | "secondary"
-  | "ghost"
-  | "destructive"
-  | "link"
-
-/**
- * The button's size. The `icon` sizes are square, for a button that holds
- * only an icon.
- *
- * - `xs`: height `h-6`, text `text-xs`.
- * - `sm`: height `h-7`, text `text-xs`.
- * - `default`: height `h-8`, text `text-sm`.
- * - `lg`: height `h-9`, text `text-sm`.
- * - `icon-xs`, `icon-sm`, `icon`, `icon-lg`: squares of the same four heights.
- */
-export type ButtonSize =
-  | "default"
-  | "xs"
-  | "sm"
-  | "lg"
-  | "icon"
-  | "icon-xs"
-  | "icon-sm"
-  | "icon-lg"
-
 const variants = {
   default: "bg-primary text-primary-foreground hover:bg-primary/80",
   outline:
@@ -59,7 +21,21 @@ const variants = {
   // For text that opens a page, use the Link component.
   // This style stays only so that code written from shadcn habit still shows the link look.
   link: `${linkStyles} cursor-pointer`,
-} satisfies Record<ButtonVariant, string>
+}
+
+/**
+ * The button's look.
+ *
+ * - `default`: filled with the primary color.
+ * - `outline`: a border on the page background, filled with the muted color on hover.
+ * - `secondary`: filled with the secondary color.
+ * - `ghost`: no fill and no border until hover.
+ * - `destructive`: a light fill and text in the destructive color.
+ * - `link`: the {@link Link} component's look.
+ *
+ * @useDeclaredType
+ */
+export type ButtonVariant = keyof typeof variants
 
 const sizes = {
   default:
@@ -72,7 +48,21 @@ const sizes = {
     "size-6 rounded-md in-data-[slot=button-group]:rounded-lg [&_svg:not([class*='size-'])]:size-3",
   "icon-sm": "size-7 rounded-md in-data-[slot=button-group]:rounded-lg",
   "icon-lg": "size-9",
-} satisfies Record<ButtonSize, string>
+}
+
+/**
+ * The button's size. The `icon` sizes are square, for a button that holds
+ * only an icon.
+ *
+ * - `xs`: height `h-6`, text `text-xs`.
+ * - `sm`: height `h-7`, text `text-xs`.
+ * - `default`: height `h-8`, text `text-sm`.
+ * - `lg`: height `h-9`, text `text-sm`.
+ * - `icon-xs`, `icon-sm`, `icon`, `icon-lg`: squares of the same four heights.
+ *
+ * @useDeclaredType
+ */
+export type ButtonSize = keyof typeof sizes
 
 const variantClasses = cva(
   "focus-visible:border-ring focus-visible:ring-ring/50 aria-invalid:ring-destructive/20 aria-invalid:border-destructive rounded-lg border border-transparent bg-clip-padding text-sm font-medium focus-visible:ring-3 aria-invalid:ring-3 [&_svg:not([class*='size-'])]:size-4 inline-flex items-center justify-center whitespace-nowrap cursor-default transition-all pointer-fine:active:not-aria-[haspopup]:scale-98 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none shrink-0 [&_svg]:shrink-0 outline-none group/button select-none",
