@@ -32,8 +32,6 @@ const variants = {
  * - `ghost`: no fill and no border until hover.
  * - `destructive`: a light fill and text in the destructive color.
  * - `link`: the {@link Link} component's look.
- *
- * @useDeclaredType
  */
 export type ButtonVariant = keyof typeof variants
 
@@ -59,8 +57,6 @@ const sizes = {
  * - `default`: height `h-8`, text `text-sm`.
  * - `lg`: height `h-9`, text `text-sm`.
  * - `icon-xs`, `icon-sm`, `icon`, `icon-lg`: squares of the same four heights.
- *
- * @useDeclaredType
  */
 export type ButtonSize = keyof typeof sizes
 
