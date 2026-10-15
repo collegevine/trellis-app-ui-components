@@ -1,6 +1,7 @@
 {
   "$schema": "https://typedoc.org/schema.json",
   "plugin": ["typedoc-plugin-markdown"],
+  "groupOrder": ["Functions", "*"],
   "entryPoints": ["src/index.ts"],
   "out": "docs",
   "readme": "none",
