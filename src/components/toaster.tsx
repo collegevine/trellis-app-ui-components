@@ -19,9 +19,6 @@ export type { ToasterProps } from "sonner"
  * package re-exports from Sonner so that the app and the Toaster share one copy
  * of Sonner.
  *
- * The Toaster takes its font, colors, border and corner radius from the theme,
- * and its icons from Phosphor. It accepts every prop of Sonner's `Toaster`.
- *
  * @example
  * ```tsx
  * // app/root.tsx, inside <body>, after the page content
