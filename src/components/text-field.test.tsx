@@ -37,6 +37,7 @@ describe("TextField", () => {
     expect(label.htmlFor).toBe(input.id)
     expect(input.name).toBe("gpa")
     expect(input.className).toContain("border-input")
+    expect(root.firstElementChild!.className).toContain("gap-1.5")
   })
 
   it("does not type check without a label", () => {

@@ -75,7 +75,7 @@ function FieldShell(
       data-slot={slot}
       disabled={disabled}
       invalid={shownError ? true : undefined}
-      className={cn("group/field flex w-full flex-col gap-2", className)}
+      className={cn("group/field flex w-full flex-col gap-1.5", className)}
     >
       <Field.Label className="flex w-fit items-center gap-2 text-sm leading-snug font-medium select-none data-disabled:opacity-50">
         {label}
