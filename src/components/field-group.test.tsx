@@ -24,7 +24,7 @@ function render(element: ReactElement) {
 afterEach(() => container.remove())
 
 describe("FieldGroup", () => {
-  it("spaces fields at twice the gap between a label and its control", () => {
+  it("spaces fields 16 px apart, with each label 6 px above its control", () => {
     const root = render(
       <FieldGroup>
         <TextField label="Street" />
@@ -32,7 +32,7 @@ describe("FieldGroup", () => {
       </FieldGroup>
     )
     expect(root.querySelector("[data-slot=field-group]")!.className).toContain("gap-4")
-    expect(root.querySelector("[data-slot=text-field]")!.className).toContain("gap-2")
+    expect(root.querySelector("[data-slot=text-field]")!.className).toContain("gap-1.5")
   })
 })
 
