@@ -92,6 +92,19 @@ describe("TextArea", () => {
   })
 })
 
+describe("FieldGroup", () => {
+  it("spaces fields at twice the gap between a label and its control", () => {
+    const root = render(
+      <FieldGroup>
+        <TextField label="Street" />
+        <TextField label="City" />
+      </FieldGroup>
+    )
+    expect(root.querySelector("[data-slot=field-group]")!.className).toContain("gap-4")
+    expect(root.querySelector("[data-slot=text-field]")!.className).toContain("gap-2")
+  })
+})
+
 describe("FieldSet", () => {
   it("names the section with a legend around its fields", () => {
     const root = render(

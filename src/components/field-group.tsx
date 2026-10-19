@@ -21,7 +21,7 @@ export type FieldGroupProps = ComponentProps<"div">
  */
 export function FieldGroup(props: FieldGroupProps) {
   const { className, ...rest } = props
-  return <div data-slot="field-group" className={cn("flex w-full flex-col gap-5", className)} {...rest} />
+  return <div data-slot="field-group" className={cn("flex w-full flex-col gap-4", className)} {...rest} />
 }
 
 /** Props for {@link FieldSet}. */
