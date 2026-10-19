@@ -13,12 +13,6 @@ export {
 export { Link, type LinkProps } from "./components/link.js"
 export { Toaster, toast, type ToasterProps } from "./components/toaster.js"
 export {
-  FieldGroup,
-  FieldSet,
-  type FieldGroupProps,
-  type FieldSetProps,
-} from "./components/field-group.js"
-export {
   TextArea,
   TextField,
   type FieldTextProps,

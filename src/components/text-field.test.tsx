@@ -4,7 +4,6 @@ import { act, type ReactElement } from "react"
 import { createRoot } from "react-dom/client"
 import { afterEach, describe, expect, it } from "vitest"
 
-import { FieldGroup, FieldSet } from "./field-group.js"
 import { TextArea, TextField } from "./text-field.js"
 
 declare global {
@@ -97,11 +96,11 @@ describe("TextField browser checks", () => {
   it("shows a failed check under the first field on submit and puts the cursor there", () => {
     const root = render(
       <form>
-        <FieldSet legend="Contact">
+        <fieldset>
           <TextField label="Name" name="name" />
           <TextField label="Email" name="email" type="email" required />
           <TextField label="Phone" name="phone" required />
-        </FieldSet>
+        </fieldset>
       </form>
     )
     const email = root.querySelector<HTMLInputElement>("input[name=email]")!
@@ -168,34 +167,5 @@ describe("TextArea", () => {
     expect(textarea.className).toContain("field-sizing-content")
     expect(textarea.getAttribute("aria-invalid")).toBe("true")
     expect(describedBy(textarea)).toContain("Write a note.")
-  })
-})
-
-describe("FieldGroup", () => {
-  it("spaces fields at twice the gap between a label and its control", () => {
-    const root = render(
-      <FieldGroup>
-        <TextField label="Street" />
-        <TextField label="City" />
-      </FieldGroup>
-    )
-    expect(root.querySelector("[data-slot=field-group]")!.className).toContain("gap-4")
-    expect(root.querySelector("[data-slot=text-field]")!.className).toContain("gap-2")
-  })
-})
-
-describe("FieldSet", () => {
-  it("names the section with a legend around its fields", () => {
-    const root = render(
-      <FieldSet legend="Mailing address">
-        <FieldGroup>
-          <TextField label="Street" />
-          <TextField label="City" />
-        </FieldGroup>
-      </FieldSet>
-    )
-    const fieldset = root.querySelector("fieldset")!
-    expect(fieldset.textContent).toContain("Mailing address")
-    expect(fieldset.querySelectorAll("input")).toHaveLength(2)
   })
 })
