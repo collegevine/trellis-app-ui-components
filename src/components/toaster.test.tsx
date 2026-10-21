@@ -9,6 +9,11 @@ describe("Toaster", () => {
     expect(html).toContain('aria-label="Notifications')
   })
 
+  it("takes its font from the theme", () => {
+    const { style } = Toaster({}).props
+    expect(style.fontFamily).toBe("var(--font-sans)")
+  })
+
   it("re-exports Sonner's toast function", () => {
     expect(typeof toast).toBe("function")
     expect(typeof toast.success).toBe("function")
