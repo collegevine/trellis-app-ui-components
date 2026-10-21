@@ -1,7 +1,7 @@
 "use client"
 
 import { Field } from "@base-ui/react/field"
-import type { ReactElement, ReactNode } from "react"
+import { useRef, useState, type ReactElement, type ReactNode } from "react"
 
 import { cn } from "../lib/utils.js"
 
@@ -36,6 +36,14 @@ export type TextFieldProps = FieldTextProps & Omit<Field.Control.Props, "classNa
  */
 export type TextAreaProps = FieldTextProps & Omit<Field.Control.Props, "className" | "render">
 
+function firstFailedControl(form: HTMLFormElement | null) {
+  return Array.from(form?.elements ?? []).find(
+    (control) =>
+      (control instanceof HTMLInputElement || control instanceof HTMLTextAreaElement) &&
+      !control.validity.valid
+  )
+}
+
 function FieldShell(
   props: FieldTextProps & Omit<Field.Control.Props, "className"> & {
     controlClassName: string
@@ -43,27 +51,64 @@ function FieldShell(
     control?: ReactElement
   }
 ) {
-  const { label, description, error, className, controlClassName, slot, control, disabled, ...rest } =
-    props
+  const {
+    label,
+    description,
+    error,
+    className,
+    controlClassName,
+    slot,
+    control,
+    disabled,
+    onBlur,
+    onChange,
+    onInvalid,
+    ...rest
+  } = props
+  const [browserError, setBrowserError] = useState<string>()
+  const edited = useRef(false)
+  const shownError = error ?? browserError
+  const check = (element: HTMLInputElement) =>
+    setBrowserError(element.validity.valid ? undefined : element.validationMessage)
   return (
     <Field.Root
       data-slot={slot}
       disabled={disabled}
-      invalid={error ? true : undefined}
+      invalid={shownError ? true : undefined}
       className={cn("group/field flex w-full flex-col gap-1.5", className)}
     >
       <Field.Label className="flex w-fit items-center gap-2 text-sm leading-snug font-medium select-none data-disabled:opacity-50">
         {label}
       </Field.Label>
-      <Field.Control render={control} className={cn(controlStyles, controlClassName)} {...rest} />
+      <Field.Control
+        render={control}
+        className={cn(controlStyles, controlClassName)}
+        {...rest}
+        onInvalid={(event) => {
+          onInvalid?.(event)
+          event.preventDefault()
+          const element = event.currentTarget
+          check(element)
+          if (firstFailedControl(element.form) === element) element.focus()
+        }}
+        onChange={(event) => {
+          onChange?.(event)
+          edited.current = true
+          if (browserError !== undefined) check(event.currentTarget)
+        }}
+        onBlur={(event) => {
+          onBlur?.(event)
+          if (edited.current) check(event.currentTarget)
+        }}
+      />
       {description ? (
         <Field.Description className="text-muted-foreground text-sm leading-normal">
           {description}
         </Field.Description>
       ) : null}
-      {error ? (
+      {shownError ? (
         <Field.Error match className="text-destructive text-sm">
-          {error}
+          {shownError}
         </Field.Error>
       ) : (
         <Field.Error className="text-destructive text-sm" />
@@ -77,8 +122,10 @@ function FieldShell(
  * Base UI's `Field`, which connects the label, the help line and the error to
  * the input for screen readers.
  *
- * Pass `error` when the value fails a check. When a browser check such as
- * `required` fails, the browser shows its own message in a popup.
+ * Pass `error` when the value fails a check that the browser cannot do. When a
+ * browser check such as `required` or `type="email"` fails, the field shows the
+ * browser's message in the same place: on submit, which also puts the cursor in
+ * the first field that fails, and when the user leaves a field that they edited.
  *
  * Text is `text-base` below the `md` breakpoint, so that phones do not zoom in
  * when the field gets focus, and `text-sm` above it.
