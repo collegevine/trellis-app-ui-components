@@ -25,3 +25,24 @@ export {
   type TextAreaProps,
   type TextFieldProps,
 } from "./components/text-field.js"
+export {
+  AppFrame,
+  AppFrameNavLink,
+  type AppFrameLayout,
+  type AppFrameNavLinkProps,
+  type AppFrameProps,
+  type FrameSchool,
+  type SchoolLogo,
+} from "./components/app-frame.js"
+export {
+  BRANDING_STEPS,
+  defaultBrandingStep,
+  frameColors,
+  readableText,
+  schoolTheme,
+  selectedFill,
+  type BrandingStep,
+  type Fill,
+  type FrameColors,
+  type SchoolColors,
+} from "./lib/branding.js"
