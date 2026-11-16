@@ -1,7 +1,12 @@
 import { useEffect, useRef, type CSSProperties, type ReactNode } from "react"
 import { NavLink, useLocation, type NavLinkProps } from "react-router"
 
-import { frameColors, type BrandingStep, type FrameColors } from "../lib/branding.js"
+import {
+  frameColors,
+  unbrandedFrameColors,
+  type BrandingStep,
+  type FrameColors,
+} from "../lib/branding.js"
 import { cn } from "../lib/utils.js"
 
 /** A logo image. */
@@ -34,7 +39,7 @@ export interface FrameSchool {
  * Where the frame puts the nav.
  *
  * - `top`: the app name and the nav sit in the top edge of the frame, next to
- *   the logo.
+ *   the logo. Without a school, the app name starts the top edge.
  * - `left`: the nav runs down the left side of the frame, under the logo and
  *   the app name.
  * - `plain`: no frame. The logo sits above the page. Use it for a page that
@@ -42,12 +47,25 @@ export interface FrameSchool {
  */
 export type AppFrameLayout = "top" | "left" | "plain"
 
+/** The school brand for {@link AppFrame}, or none. */
+export type AppFrameBrand =
+  | {
+      /** The school whose brand the frame shows. */
+      school: FrameSchool
+      /** The step on the branding scale. The `plain` layout ignores it. */
+      step: BrandingStep
+    }
+  | {
+      /**
+       * No school brand. The frame takes the CollegeVine look, and the app
+       * name sits where the logo goes. With no nav, there is no frame.
+       */
+      school?: undefined
+      step?: undefined
+    }
+
 /** Props for {@link AppFrame}. */
-export interface AppFrameProps {
-  /** The school whose brand the frame shows. */
-  school: FrameSchool
-  /** The step on the branding scale. The `plain` layout ignores it. */
-  step: BrandingStep
+export type AppFrameProps = AppFrameBrand & {
   /** Where the frame puts the nav. Defaults to `top`. */
   layout?: AppFrameLayout
   /** The app's name, shown in the frame. */
@@ -84,8 +102,11 @@ function Logo({ school, look }: { school: FrameSchool; look: FrameColors["logo"]
 }
 
 /**
- * The frame around a school-branded app. It wraps the page on all four sides,
- * with the school logo in its top edge, and holds the app's nav.
+ * The frame around an app. It wraps the page on all four sides, holds the
+ * app's nav, and shows the school logo in its top edge.
+ *
+ * Without a `school`, the frame takes the CollegeVine look, and the app name
+ * sits where the logo goes. An app with no school and no nav gets no frame.
  *
  * The `step` sets how much school color the frame shows. Call
  * `defaultBrandingStep` for the step of a school's first app.
@@ -131,18 +152,20 @@ export function AppFrame({
     if (scroller.current) scroller.current.scrollTop = 0
   }, [pathname])
 
-  if (layout === "plain") {
+  if (layout === "plain" || (!school && !nav)) {
     return (
       <div data-slot="app-frame" data-layout="plain" className="min-h-screen bg-background text-foreground">
-        <header className="flex h-14 items-center px-6">
-          <Logo school={school} look="original" />
-        </header>
+        {school ? (
+          <header className="flex h-14 items-center px-6">
+            <Logo school={school} look="original" />
+          </header>
+        ) : null}
         <main className={className}>{children}</main>
       </div>
     )
   }
 
-  const colors = frameColors(school.main, step)
+  const colors = school ? frameColors(school.main, step) : unbrandedFrameColors()
   const vars = {
     "--frame": colors.frame,
     "--frame-foreground": colors.frameText,
@@ -151,7 +174,8 @@ export function AppFrame({
     "--frame-nav-selected-foreground": colors.navSelectedText,
     "--frame-nav-hover": colors.navHover,
   } as CSSProperties
-  const logo = <Logo school={school} look={colors.logo} />
+  const title = appName ? <span className="shrink-0 text-sm font-semibold">{appName}</span> : null
+  const logo = school ? <Logo school={school} look={colors.logo} /> : title
   const canvas = (
     <style>{`html{background-color:${colors.frame};scrollbar-gutter:auto}body{background-color:transparent}`}</style>
   )
@@ -177,14 +201,14 @@ export function AppFrame({
       <div
         data-slot="app-frame"
         data-layout="left"
-        data-step={step}
+        data-step={step ?? "unbranded"}
         style={vars}
         className="flex h-dvh overflow-hidden bg-(--frame) text-(--frame-foreground)"
       >
         {canvas}
         <aside className="flex w-60 shrink-0 flex-col overflow-y-auto">
           <div className="flex h-14 items-center px-6">{logo}</div>
-          {appName ? <div className="px-6 pt-2 pb-2 text-sm font-semibold">{appName}</div> : null}
+          {school && appName ? <div className="px-6 pt-2 pb-2 text-sm font-semibold">{appName}</div> : null}
           {nav ? (
             <nav data-slot="app-frame-nav" className="flex flex-col gap-0.5 px-3">
               {nav}
@@ -200,17 +224,17 @@ export function AppFrame({
     <div
       data-slot="app-frame"
       data-layout="top"
-      data-step={step}
+      data-step={step ?? "unbranded"}
       style={vars}
       className="flex h-dvh flex-col overflow-hidden bg-(--frame) text-(--frame-foreground)"
     >
       {canvas}
       <header className="flex h-14 shrink-0 items-center gap-4 px-4">
         {logo}
-        {appName ? (
+        {school && title ? (
           <>
             <span aria-hidden="true" className="h-5 w-px shrink-0 bg-current opacity-30" />
-            <span className="shrink-0 text-sm font-semibold">{appName}</span>
+            {title}
           </>
         ) : null}
         {nav ? (

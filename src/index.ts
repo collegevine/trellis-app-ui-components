@@ -28,6 +28,7 @@ export {
 export {
   AppFrame,
   AppFrameNavLink,
+  type AppFrameBrand,
   type AppFrameLayout,
   type AppFrameNavLinkProps,
   type AppFrameProps,
@@ -41,6 +42,7 @@ export {
   readableText,
   schoolTheme,
   selectedFill,
+  unbrandedFrameColors,
   type BrandingStep,
   type Fill,
   type FrameColors,
