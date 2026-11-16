@@ -132,3 +132,38 @@ describe("AppFrameNavLink", () => {
     expect(html).toContain("hover:not-aria-[current=page]:bg-(--frame-nav-hover)")
   })
 })
+
+describe("AppFrame with no school brand", () => {
+  it("draws the frame in the CollegeVine neutrals from the theme", () => {
+    const html = render(<AppFrame appName="Admissions dashboard" nav={nav} />)
+    expect(html).toContain("--frame:var(--secondary)")
+    expect(html).toContain("--frame-page:var(--background)")
+    expect(html).toContain('data-step="unbranded"')
+  })
+
+  it("puts the app name where the logo goes in the top edge, with no divider", () => {
+    const html = render(<AppFrame appName="Admissions dashboard" nav={nav} />)
+    const header = html.match(/<header[\s\S]*<\/header>/)?.[0] ?? ""
+    expect(header).toMatch(/^<header[^>]*><span[^>]*>Admissions dashboard<\/span>/)
+    expect(header).not.toContain('aria-hidden="true"')
+    expect(html).not.toContain("<img")
+  })
+
+  it("puts the app name at the top of the left nav, once", () => {
+    const html = render(<AppFrame layout="left" appName="Admissions dashboard" nav={nav} />)
+    const aside = html.match(/<aside[\s\S]*<\/aside>/)?.[0] ?? ""
+    expect(aside.match(/Admissions dashboard/g)).toHaveLength(1)
+    expect(aside.indexOf("Admissions dashboard")).toBeLessThan(aside.indexOf("Overview"))
+  })
+
+  it("draws no frame when the app has no nav", () => {
+    const html = render(
+      <AppFrame appName="Admissions dashboard">
+        <p>Page</p>
+      </AppFrame>
+    )
+    expect(html).not.toContain("--frame")
+    expect(html).not.toContain("<header")
+    expect(html).toContain("<p>Page</p>")
+  })
+})
