@@ -130,16 +130,12 @@ function Logo({
         return m ? [m] : []
       })
     : []
-  const choice = pickLogo(measured, space, look === "white")
+  const choice = pickLogo(measured, space, look)
   const fallback = school.logos[0]
   const logo = choice?.logo ?? fallback
   if (!logo) return null
-  const filter =
-    look === "black" || (choice ? choice.recolor && look === "original" : false)
-      ? BLACK_LOGO
-      : look === "white" && (!choice || choice.recolor)
-        ? WHITE_LOGO
-        : undefined
+  const recolor = choice ? choice.recolor : look !== "original"
+  const filter = recolor ? (look === "white" ? WHITE_LOGO : BLACK_LOGO) : undefined
   const name = logo.showsName ? null : <span className="truncate text-sm font-semibold">{school.name}</span>
   if (!choice) {
     return (

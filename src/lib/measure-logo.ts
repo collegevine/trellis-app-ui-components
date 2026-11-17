@@ -81,7 +81,7 @@ async function measure(logo: SchoolLogo): Promise<LogoMeasurement | null> {
   return {
     logo,
     ratio: inkWidth / inkHeight,
-    white: bounds.white,
+    tone: bounds.tone,
     crop: {
       x: bounds.left / width,
       y: bounds.top / height,
