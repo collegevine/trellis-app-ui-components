@@ -8,7 +8,7 @@ import {
   schoolTheme,
   selectedFill,
 } from "./branding.js"
-import { contrastRatio } from "./color.js"
+import { contrastRatio, type Oklch, toOklch } from "./color.js"
 
 describe("defaultBrandingStep", () => {
   it.each([
@@ -171,19 +171,80 @@ describe("frameColors", () => {
     expect(colors.logo).toBe("original")
   })
 
-  it("draws a gray frame with no school color around a white page at the logo-only step", () => {
-    const colors = frameColors("#c41230", "logo-only")
-    expect(colors.frame).toBe("#ebebeb")
-    expect(colors.page).toBe("#ffffff")
-    expect(JSON.stringify(colors)).not.toContain("#c41230")
+  it("fills the selected nav item at the tinted step with the frame darkened by 8%, and hover by 4%", () => {
+    const colors = frameColors("#003da5", "tinted-frame")
+    expect(colors.navSelected).toBe(`color-mix(in oklab, ${colors.frame}, #000000 8%)`)
+    expect(colors.navHover).toBe(`color-mix(in oklab, ${colors.frame}, #000000 4%)`)
+  })
+})
+
+describe("frameColors at the logo-only step", () => {
+  const schools = [
+    ["Northfield blue", "#003da5"],
+    ["Redmond red", "#c41230"],
+    ["Sweet Briar pink", "#ed2b74"],
+    ["Columbia light blue", "#b9d9eb"],
+    ["Marshall light green", "#00b140"],
+    ["Michigan Tech gold", "#ffcd00"],
+  ] as const
+
+  const hueGap = (first: number, second: number) => {
+    const gap = Math.abs(first - second) % 360
+    return Math.min(gap, 360 - gap)
+  }
+
+  it.each(schools.filter(([name]) => name !== "Michigan Tech gold"))("draws the frame for %s in the hue of the main color", (_, main) => {
+    const frame = toOklch(frameColors(main, "logo-only").frame)
+    expect(hueGap(frame.h, toOklch(main).h)).toBeLessThan(6)
   })
 
-  it.each(["tinted-frame", "logo-only"] as const)(
-    "fills the selected nav item at the %s step with the frame darkened by 8%%, and hover by 4%%",
-    (step) => {
-      const colors = frameColors("#003da5", step)
-      expect(colors.navSelected).toBe(`color-mix(in oklab, ${colors.frame}, #000000 8%)`)
-      expect(colors.navHover).toBe(`color-mix(in oklab, ${colors.frame}, #000000 4%)`)
+  it("gives every school the same frame lightness and amount of color", () => {
+    const frames = schools.map(([, main]) => toOklch(frameColors(main, "logo-only").frame))
+    for (const frame of frames) {
+      expect(frame.l).toBeCloseTo(frames[0]!.l, 2)
+      expect(frame.c).toBeGreaterThan(0.014)
+      expect(frame.c).toBeLessThan(0.022)
+    }
+  })
+
+  it("draws a lighter frame for a yellow hue", () => {
+    const yellow = toOklch(frameColors("#c9c400", "logo-only").frame)
+    const blue = toOklch(frameColors("#003da5", "logo-only").frame)
+    expect(yellow.l).toBeGreaterThan(blue.l + 0.01)
+  })
+
+  it.each([
+    ["dark gray", "#333333"],
+    ["black", "#000000"],
+    ["white", "#ffffff"],
+  ])("draws a warm frame for a %s main color", (_, main) => {
+    const frame = toOklch(frameColors(main, "logo-only").frame)
+    expect(frame.c).toBeGreaterThan(0.014)
+    expect(hueGap(frame.h, 97)).toBeLessThan(6)
+  })
+
+  it.each(schools)(
+    "makes the hover and selected nav fills for %s darker steps of the frame with more color, not a mix with black",
+    (_, main) => {
+      const colors = frameColors(main, "logo-only")
+      const [frame, hover, selected] = [colors.frame, colors.navHover, colors.navSelected].map(toOklch) as [
+        Oklch,
+        Oklch,
+        Oklch,
+      ]
+      expect(hover.l).toBeLessThan(frame.l)
+      expect(selected.l).toBeLessThan(hover.l)
+      expect(selected.c).toBeGreaterThan(frame.c)
+      expect(hueGap(selected.h, frame.h)).toBeLessThan(6)
+      expect(colors.navSelected).not.toContain("#000000")
     }
   )
+
+  it("keeps readable dark text on the frame and the selected nav fill", () => {
+    for (const [, main] of schools) {
+      const colors = frameColors(main, "logo-only")
+      expect(contrastRatio(colors.frame, colors.frameText)).toBeGreaterThanOrEqual(4.5)
+      expect(contrastRatio(colors.navSelected, colors.navSelectedText)).toBeGreaterThanOrEqual(4.5)
+    }
+  })
 })
