@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest"
 
-import { inkBounds, logoSize, pickLogo, type LogoSpace, type MeasuredLogo } from "./logo.js"
+import { inkBounds, logoSize, pickLogo, type LogoSpace, type LogoTone, type MeasuredLogo } from "./logo.js"
 
 type Rgba = [number, number, number, number]
 
@@ -8,6 +8,7 @@ const CLEAR: Rgba = [0, 0, 0, 0]
 const NAVY: Rgba = [20, 30, 70, 255]
 const PAPER: Rgba = [255, 255, 255, 255]
 const RED: Rgba = [196, 18, 48, 255]
+const BLACK: Rgba = [12, 12, 14, 255]
 
 function image(width: number, height: number, fill: Rgba, ink: Rgba, box: [number, number, number, number]) {
   const pixels = new Uint8ClampedArray(width * height * 4)
@@ -23,8 +24,8 @@ function image(width: number, height: number, fill: Rgba, ink: Rgba, box: [numbe
 
 const topEdge: LogoSpace = { area: 28 * 28 * 5, minHeight: 16, maxHeight: 36, maxWidth: 240 }
 
-function measured(src: string, ratio: number, white = false): MeasuredLogo {
-  return { logo: { src }, ratio, white }
+function measured(src: string, ratio: number, tone: LogoTone = "color"): MeasuredLogo {
+  return { logo: { src }, ratio, tone }
 }
 
 describe("inkBounds", () => {
@@ -46,8 +47,8 @@ describe("inkBounds", () => {
   it("marks a logo drawn in white", () => {
     const white = inkBounds(image(60, 20, NAVY, PAPER, [5, 5, 54, 14]), 60, 20, { solidBackground: true })
     const red = inkBounds(image(60, 20, CLEAR, RED, [5, 5, 54, 14]), 60, 20, { solidBackground: false })
-    expect(white?.white).toBe(true)
-    expect(red?.white).toBe(false)
+    expect(white?.tone).toBe("white")
+    expect(red?.tone).toBe("color")
   })
 
   it("marks a white logo whose soft edges blend into a dark background", () => {
@@ -55,7 +56,7 @@ describe("inkBounds", () => {
     for (let y = 7; y <= 12; y++) {
       for (let x = 7; x <= 52; x++) pixels.set(PAPER, (y * 60 + x) * 4)
     }
-    expect(inkBounds(pixels, 60, 20, { solidBackground: true })?.white).toBe(true)
+    expect(inkBounds(pixels, 60, 20, { solidBackground: true })?.tone).toBe("white")
   })
 
   it("does not mark a colored logo with white parts as white", () => {
@@ -63,7 +64,11 @@ describe("inkBounds", () => {
     for (let y = 5; y <= 7; y++) {
       for (let x = 5; x <= 54; x++) pixels.set(PAPER, (y * 60 + x) * 4)
     }
-    expect(inkBounds(pixels, 60, 20, { solidBackground: false })?.white).toBe(false)
+    expect(inkBounds(pixels, 60, 20, { solidBackground: false })?.tone).toBe("color")
+  })
+
+  it("marks a logo drawn in black", () => {
+    expect(inkBounds(image(60, 20, CLEAR, BLACK, [5, 5, 54, 14]), 60, 20, { solidBackground: false })?.tone).toBe("black")
   })
 
   it("finds nothing in an empty file", () => {
@@ -99,39 +104,52 @@ describe("pickLogo", () => {
   const oneLine = measured("/brand/one-line.svg", 8)
   const veryWide = measured("/brand/very-wide.svg", 22)
   const stacked = measured("/brand/stacked.svg", 3.7)
-  const white = measured("/brand/white.svg", 8, true)
+  const white = measured("/brand/white.svg", 8, "white")
+  const black = measured("/brand/black.svg", 8, "black")
 
   it("keeps the one-line logo when it fits", () => {
-    expect(pickLogo([stacked, oneLine], topEdge, false)?.logo.src).toBe("/brand/one-line.svg")
+    expect(pickLogo([stacked, oneLine], topEdge, "original")?.logo.src).toBe("/brand/one-line.svg")
   })
 
   it("switches to the stacked logo when the one-line logo is too wide to read", () => {
-    expect(pickLogo([veryWide, stacked], topEdge, false)?.logo.src).toBe("/brand/stacked.svg")
+    expect(pickLogo([veryWide, stacked], topEdge, "original")?.logo.src).toBe("/brand/stacked.svg")
   })
 
   it("switches to the stacked logo in a narrow space", () => {
     const narrow: LogoSpace = { ...topEdge, maxWidth: 120 }
-    expect(pickLogo([oneLine, stacked], narrow, false)?.logo.src).toBe("/brand/stacked.svg")
+    expect(pickLogo([oneLine, stacked], narrow, "original")?.logo.src).toBe("/brand/stacked.svg")
   })
 
   it("shows the only logo even when it does not fit", () => {
-    expect(pickLogo([veryWide], topEdge, false)?.logo.src).toBe("/brand/very-wide.svg")
+    expect(pickLogo([veryWide], topEdge, "original")?.logo.src).toBe("/brand/very-wide.svg")
   })
 
   it("shows the white logo on the full-color frame and leaves it out elsewhere", () => {
-    expect(pickLogo([oneLine, white], topEdge, true)).toMatchObject({ logo: { src: "/brand/white.svg" }, recolor: false })
-    expect(pickLogo([white, oneLine], topEdge, false)?.logo.src).toBe("/brand/one-line.svg")
+    expect(pickLogo([oneLine, white], topEdge, "white")).toMatchObject({ logo: { src: "/brand/white.svg" }, recolor: false })
+    expect(pickLogo([white, oneLine], topEdge, "original")?.logo.src).toBe("/brand/one-line.svg")
   })
 
   it("recolors a full-color logo when the school gives no white logo", () => {
-    expect(pickLogo([oneLine], topEdge, true)).toMatchObject({ logo: { src: "/brand/one-line.svg" }, recolor: true })
+    expect(pickLogo([oneLine], topEdge, "white")).toMatchObject({ logo: { src: "/brand/one-line.svg" }, recolor: true })
   })
 
   it("recolors a white logo on a light frame when the school gives no other logo", () => {
-    expect(pickLogo([white], topEdge, false)).toMatchObject({ logo: { src: "/brand/white.svg" }, recolor: true })
+    expect(pickLogo([white], topEdge, "original")).toMatchObject({ logo: { src: "/brand/white.svg" }, recolor: true })
+  })
+
+  it("shows the black logo on a full-color frame in a light school color", () => {
+    expect(pickLogo([oneLine, black], topEdge, "black")).toMatchObject({ logo: { src: "/brand/black.svg" }, recolor: false })
+  })
+
+  it("recolors a full-color logo black when the school gives no black logo", () => {
+    expect(pickLogo([oneLine, white], topEdge, "black")).toMatchObject({ logo: { src: "/brand/one-line.svg" }, recolor: true })
+  })
+
+  it("prefers the full-color logo to the black logo on a light frame", () => {
+    expect(pickLogo([black, oneLine], topEdge, "original")?.logo.src).toBe("/brand/one-line.svg")
   })
 
   it("picks nothing from no logos", () => {
-    expect(pickLogo([], topEdge, false)).toBeNull()
+    expect(pickLogo([], topEdge, "original")).toBeNull()
   })
 })

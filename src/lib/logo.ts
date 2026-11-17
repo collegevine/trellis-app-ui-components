@@ -7,19 +7,23 @@ export interface LogoSpace {
   maxWidth: number
 }
 
+export type LogoTone = "white" | "black" | "color"
+
+export type LogoLook = "original" | "white" | "black"
+
 export interface InkBounds {
   left: number
   top: number
   right: number
   bottom: number
   background: [number, number, number] | null
-  white: boolean
+  tone: LogoTone
 }
 
 export interface MeasuredLogo {
   logo: SchoolLogo
   ratio: number
-  white: boolean
+  tone: LogoTone
 }
 
 export interface LogoSize {
@@ -39,6 +43,8 @@ const CLEAR_ALPHA = 12
 const BACKGROUND_DISTANCE = 36
 const WHITE_CHANNEL = 180
 const WHITE_SHARE = 0.5
+const BLACK_CHANNEL = 80
+const BLACK_SHARE = 0.7
 
 function channel(pixels: Uint8ClampedArray, i: number) {
   return pixels[i] ?? 0
@@ -83,6 +89,7 @@ export function inkBounds(
   let right = -1
   let ink = 0
   let whiteInk = 0
+  let blackInk = 0
   for (let y = 0; y < height; y++) {
     for (let x = 0; x < width; x++) {
       const i = (y * width + x) * 4
@@ -90,6 +97,7 @@ export function inkBounds(
       if (background && distance(pixels, i, background) <= BACKGROUND_DISTANCE) continue
       ink++
       if (Math.min(channel(pixels, i), channel(pixels, i + 1), channel(pixels, i + 2)) > WHITE_CHANNEL) whiteInk++
+      if (Math.max(channel(pixels, i), channel(pixels, i + 1), channel(pixels, i + 2)) < BLACK_CHANNEL) blackInk++
       if (y < top) top = y
       if (y > bottom) bottom = y
       if (x < left) left = x
@@ -97,7 +105,9 @@ export function inkBounds(
     }
   }
   if (bottom < 0) return null
-  return { left, top, right, bottom, background, white: whiteInk / ink >= WHITE_SHARE }
+  const tone: LogoTone =
+    whiteInk / ink >= WHITE_SHARE ? "white" : blackInk / ink >= BLACK_SHARE ? "black" : "color"
+  return { left, top, right, bottom, background, tone }
 }
 
 export function logoSize(ratio: number, space: LogoSpace): LogoSize {
@@ -115,12 +125,20 @@ export function logoSize(ratio: number, space: LogoSpace): LogoSize {
 export function pickLogo<T extends MeasuredLogo>(
   versions: T[],
   space: LogoSpace,
-  onDark: boolean
+  look: LogoLook
 ): LogoChoice<T> | null {
   if (versions.length === 0) return null
-  const matching = versions.filter((v) => v.white === onDark)
-  const candidates = matching.length > 0 ? matching : versions
-  const recolor = matching.length === 0
+  const withTone = (tone: LogoTone) => versions.filter((v) => v.tone === tone)
+  const preferred =
+    look === "original"
+      ? [withTone("color"), withTone("black")]
+      : look === "white"
+        ? [withTone("white")]
+        : [withTone("black")]
+  const matching = preferred.find((group) => group.length > 0)
+  const nonWhite = versions.filter((v) => v.tone !== "white")
+  const candidates = matching ?? (look === "white" || nonWhite.length === 0 ? versions : nonWhite)
+  const recolor = !matching
   const sized = candidates.map((measured) => ({ measured, size: logoSize(measured.ratio, space) }))
   const fitting = sized.filter((s) => s.size.fits)
   const pool = fitting.length > 0 ? fitting : sized
