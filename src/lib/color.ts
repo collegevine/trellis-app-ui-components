@@ -49,12 +49,6 @@ export function toOklch(color: string): Oklch {
   return { l, c: Math.hypot(a, b), h: (hue + 360) % 360 }
 }
 
-export function oklabDistance(first: string, second: string): number {
-  const [l1, a1, b1] = toOklab(first)
-  const [l2, a2, b2] = toOklab(second)
-  return Math.hypot(l1 - l2, a1 - a2, b1 - b2)
-}
-
 function luminance(color: string): number {
   const [r, g, b] = parseHex(color).map(toLinear) as [number, number, number]
   return 0.2126 * r + 0.7152 * g + 0.0722 * b
