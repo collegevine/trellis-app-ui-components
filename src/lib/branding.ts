@@ -3,12 +3,12 @@ import { contrastRatio, normalizeHex, toOklch } from "./color.js"
 /**
  * A step on the branding scale, from least to most school color.
  *
- * - `logo-only`: a light gray frame around a lighter gray page. The school
- *   color appears in the logo, in charts and in selected controls.
+ * - `logo-only`: a light gray frame around a white page. The school color
+ *   appears in the logo, in charts and in selected controls.
  * - `tinted-frame`: a frame with a light tint of the main school color, around
- *   a neutral page.
- * - `full-color-frame`: the main school color as the frame, around a page with
- *   a faint tint of the main school color. The logo shows in white.
+ *   a white page.
+ * - `full-color-frame`: the main school color as the frame, around a white
+ *   page. The logo shows in white.
  */
 export type BrandingStep = "logo-only" | "tinted-frame" | "full-color-frame"
 
@@ -174,6 +174,7 @@ export interface FrameColors {
 }
 
 const GRAY_FRAME = "#ebebeb"
+const PAGE = "#ffffff"
 
 function tint(color: string, percent: number): string {
   return `color-mix(in srgb, ${color} ${percent}%, ${LIGHT_TEXT})`
@@ -195,7 +196,7 @@ export function frameColors(color: string, step: BrandingStep): FrameColors {
     return {
       frame: mainColor,
       frameText,
-      page: tint(mainColor, 2),
+      page: PAGE,
       navSelected: tint(mainColor, 8),
       navSelectedText: DARK_TEXT,
       navHover: `color-mix(in srgb, ${frameText} 14%, transparent)`,
@@ -206,7 +207,7 @@ export function frameColors(color: string, step: BrandingStep): FrameColors {
   return {
     frame,
     frameText: DARK_TEXT,
-    page: HUELESS_NEUTRALS["--background"],
+    page: PAGE,
     navSelected: darken(frame, 8),
     navSelectedText: DARK_TEXT,
     navHover: darken(frame, 4),
