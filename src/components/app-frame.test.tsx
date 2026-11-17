@@ -2,6 +2,7 @@ import { renderToStaticMarkup } from "react-dom/server"
 import { MemoryRouter } from "react-router"
 import { describe, expect, it } from "vitest"
 
+import { frameColors } from "../lib/branding.js"
 import { AppFrame, AppFrameNavLink, type FrameSchool } from "./app-frame.js"
 
 const depaul: FrameSchool = {
@@ -59,7 +60,7 @@ describe("AppFrame", () => {
 
   it("sets the frame colors for the step", () => {
     const html = render(<AppFrame school={depaul} step="tinted-frame" />)
-    expect(html).toContain("--frame:color-mix(in srgb, #003da5 10%, #ffffff)")
+    expect(html).toContain(`--frame:${frameColors(depaul.main, "tinted-frame").frame}`)
     expect(html).toContain('data-step="tinted-frame"')
   })
 
