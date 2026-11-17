@@ -163,22 +163,23 @@ describe("frameColors", () => {
     expect(colors.logo).toBe("black")
   })
 
-  it("tints the frame at the tinted step, around a white page", () => {
-    const colors = frameColors("#003da5", "tinted-frame")
-    expect(colors.frame).toBe("color-mix(in srgb, #003da5 10%, #ffffff)")
+  it("draws a very light gray frame with no school color around a white page at the logo-only step", () => {
+    const colors = frameColors("#c41230", "logo-only")
+    expect(colors.frame).toBe("#fafafa")
     expect(colors.page).toBe("#ffffff")
     expect(colors.frameText).toBe("#111111")
     expect(colors.logo).toBe("original")
+    expect(JSON.stringify(colors)).not.toContain("#c41230")
   })
 
-  it("fills the selected nav item at the tinted step with the frame darkened by 8%, and hover by 4%", () => {
-    const colors = frameColors("#003da5", "tinted-frame")
-    expect(colors.navSelected).toBe(`color-mix(in oklab, ${colors.frame}, #000000 8%)`)
-    expect(colors.navHover).toBe(`color-mix(in oklab, ${colors.frame}, #000000 4%)`)
+  it("fills the selected nav item at the logo-only step with the frame darkened by 8%, and hover by 4%", () => {
+    const colors = frameColors("#003da5", "logo-only")
+    expect(colors.navSelected).toBe("color-mix(in oklab, #fafafa, #000000 8%)")
+    expect(colors.navHover).toBe("color-mix(in oklab, #fafafa, #000000 4%)")
   })
 })
 
-describe("frameColors at the logo-only step", () => {
+describe("frameColors at the tinted step", () => {
   const schools = [
     ["DePaul blue", "#003da5"],
     ["Barry red", "#c41230"],
@@ -194,12 +195,12 @@ describe("frameColors at the logo-only step", () => {
   }
 
   it.each(schools.filter(([name]) => name !== "Michigan Tech gold"))("draws the frame for %s in the hue of the main color", (_, main) => {
-    const frame = toOklch(frameColors(main, "logo-only").frame)
+    const frame = toOklch(frameColors(main, "tinted-frame").frame)
     expect(hueGap(frame.h, toOklch(main).h)).toBeLessThan(6)
   })
 
   it("gives every school the same frame lightness and amount of color", () => {
-    const frames = schools.map(([, main]) => toOklch(frameColors(main, "logo-only").frame))
+    const frames = schools.map(([, main]) => toOklch(frameColors(main, "tinted-frame").frame))
     for (const frame of frames) {
       expect(frame.l).toBeCloseTo(frames[0]!.l, 2)
       expect(frame.c).toBeGreaterThan(0.014)
@@ -208,8 +209,8 @@ describe("frameColors at the logo-only step", () => {
   })
 
   it("draws a lighter frame for a yellow hue", () => {
-    const yellow = toOklch(frameColors("#c9c400", "logo-only").frame)
-    const blue = toOklch(frameColors("#003da5", "logo-only").frame)
+    const yellow = toOklch(frameColors("#c9c400", "tinted-frame").frame)
+    const blue = toOklch(frameColors("#003da5", "tinted-frame").frame)
     expect(yellow.l).toBeGreaterThan(blue.l + 0.01)
   })
 
@@ -218,7 +219,7 @@ describe("frameColors at the logo-only step", () => {
     ["black", "#000000"],
     ["white", "#ffffff"],
   ])("draws a warm frame for a %s main color", (_, main) => {
-    const frame = toOklch(frameColors(main, "logo-only").frame)
+    const frame = toOklch(frameColors(main, "tinted-frame").frame)
     expect(frame.c).toBeGreaterThan(0.014)
     expect(hueGap(frame.h, 97)).toBeLessThan(6)
   })
@@ -226,7 +227,7 @@ describe("frameColors at the logo-only step", () => {
   it.each(schools)(
     "makes the hover and selected nav fills for %s darker steps of the frame with more color, not a mix with black",
     (_, main) => {
-      const colors = frameColors(main, "logo-only")
+      const colors = frameColors(main, "tinted-frame")
       const [frame, hover, selected] = [colors.frame, colors.navHover, colors.navSelected].map(toOklch) as [
         Oklch,
         Oklch,
@@ -240,9 +241,10 @@ describe("frameColors at the logo-only step", () => {
     }
   )
 
-  it("keeps readable dark text on the frame and the selected nav fill", () => {
+  it("keeps the white page, and readable dark text on the frame and the selected nav fill", () => {
     for (const [, main] of schools) {
-      const colors = frameColors(main, "logo-only")
+      const colors = frameColors(main, "tinted-frame")
+      expect(colors.page).toBe("#ffffff")
       expect(contrastRatio(colors.frame, colors.frameText)).toBeGreaterThanOrEqual(4.5)
       expect(contrastRatio(colors.navSelected, colors.navSelectedText)).toBeGreaterThanOrEqual(4.5)
     }

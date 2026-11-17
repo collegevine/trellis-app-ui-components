@@ -3,13 +3,12 @@ import { contrastRatio, fromOklch, normalizeHex, toOklch } from "./color.js"
 /**
  * A step on the branding scale, from least to most school color.
  *
- * - `logo-only`: a light neutral frame in the hue of the main school color,
- *   around a white page. Every school gets the same lightness and the same
- *   small amount of color, and a main color close to gray, black or white
- *   gets a warm neutral. The school color appears in the logo, in charts and
- *   in selected controls.
- * - `tinted-frame`: a frame with a light tint of the main school color, around
- *   a white page.
+ * - `logo-only`: a very light gray frame around a white page. The school color
+ *   appears in the logo, in charts and in selected controls.
+ * - `tinted-frame`: a light frame in the hue of the main school color, around
+ *   a white page. Every school gets the same lightness and the same small
+ *   amount of color, and a main color close to gray, black or white gets a
+ *   warm neutral.
  * - `full-color-frame`: the main school color as the frame, around a white
  *   page. The logo shows in white.
  */
@@ -178,20 +177,22 @@ export interface FrameColors {
 
 const PAGE = "#ffffff"
 
-const NEUTRAL_FRAME_LIGHTNESS = 0.9625
-const YELLOW_NEUTRAL_FRAME_LIGHTNESS = 0.98
-const NEUTRAL_FRAME_STRENGTH = 0.0159
+const LIGHT_GRAY_FRAME = HUELESS_NEUTRALS["--background"]
+
+const HUE_FRAME_LIGHTNESS = 0.9625
+const YELLOW_HUE_FRAME_LIGHTNESS = 0.98
+const HUE_FRAME_STRENGTH = 0.0159
 const WARM_NEUTRAL_HUE = 97
 
 function isYellowHue(hue: number): boolean {
   return hue >= 105 && hue < 125
 }
 
-function neutralFrame(mainColor: string): Pick<FrameColors, "frame" | "navSelected" | "navHover"> {
+function hueFrame(mainColor: string): Pick<FrameColors, "frame" | "navSelected" | "navHover"> {
   const hue = isNeutral(mainColor) ? WARM_NEUTRAL_HUE : toOklch(mainColor).h
-  const lightness = isYellowHue(hue) ? YELLOW_NEUTRAL_FRAME_LIGHTNESS : NEUTRAL_FRAME_LIGHTNESS
+  const lightness = isYellowHue(hue) ? YELLOW_HUE_FRAME_LIGHTNESS : HUE_FRAME_LIGHTNESS
   const shade = (darker: number, strength: number) =>
-    fromOklch({ l: lightness - darker, c: NEUTRAL_FRAME_STRENGTH * strength, h: hue })
+    fromOklch({ l: lightness - darker, c: HUE_FRAME_STRENGTH * strength, h: hue })
   return {
     frame: shade(0, 1),
     navHover: shade(0.017, 1.13),
@@ -226,23 +227,22 @@ export function frameColors(color: string, step: BrandingStep): FrameColors {
       logo: frameText === LIGHT_TEXT ? "white" : "black",
     }
   }
-  if (step === "logo-only") {
+  if (step === "tinted-frame") {
     return {
-      ...neutralFrame(mainColor),
+      ...hueFrame(mainColor),
       frameText: DARK_TEXT,
       page: PAGE,
       navSelectedText: DARK_TEXT,
       logo: "original",
     }
   }
-  const frame = tint(mainColor, 10)
   return {
-    frame,
+    frame: LIGHT_GRAY_FRAME,
     frameText: DARK_TEXT,
     page: PAGE,
-    navSelected: darken(frame, 8),
+    navSelected: darken(LIGHT_GRAY_FRAME, 8),
     navSelectedText: DARK_TEXT,
-    navHover: darken(frame, 4),
+    navHover: darken(LIGHT_GRAY_FRAME, 4),
     logo: "original",
   }
 }
