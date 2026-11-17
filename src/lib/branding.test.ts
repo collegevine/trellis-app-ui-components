@@ -4,6 +4,7 @@ import {
   BRANDING_STEPS,
   defaultBrandingStep,
   frameColors,
+  plainPageColor,
   readableText,
   schoolTheme,
   selectedFill,
@@ -139,6 +140,31 @@ describe("schoolTheme", () => {
     for (const name of ["--primary", "--primary-foreground", "--destructive", "--ring", "--radius"]) {
       expect(theme).not.toHaveProperty(name)
     }
+  })
+})
+
+describe("plainPageColor", () => {
+  it("keeps a page with no frame white at the logo-only step", () => {
+    expect(plainPageColor("#c41230", "logo-only")).toBe("#ffffff")
+  })
+
+  it.each(["tinted-frame", "full-color-frame"] as const)(
+    "tints a page with no frame very lightly in the school hue at the %s step",
+    (step) => {
+      const page = toOklch(plainPageColor("#c41230", step))
+      expect(page.l).toBeCloseTo(0.98, 2)
+      expect(page.c).toBeGreaterThan(0.005)
+      expect(page.c).toBeLessThan(0.02)
+      expect(Math.abs(page.h - toOklch("#c41230").h)).toBeLessThan(5)
+    },
+  )
+
+  it("tints the page the same at the tinted and full-color steps", () => {
+    expect(plainPageColor("#c41230", "tinted-frame")).toBe(plainPageColor("#c41230", "full-color-frame"))
+  })
+
+  it("gives a main color close to gray a warm tint", () => {
+    expect(Math.abs(toOklch(plainPageColor("#333333", "tinted-frame")).h - 97)).toBeLessThan(5)
   })
 })
 

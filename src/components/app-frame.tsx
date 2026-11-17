@@ -5,6 +5,7 @@ import { NavLink, useLocation, type NavLinkProps } from "react-router"
 
 import {
   frameColors,
+  plainPageColor,
   unbrandedFrameColors,
   type BrandingStep,
   type FrameColors,
@@ -44,9 +45,10 @@ export interface FrameSchool {
  *   the logo. Without a school, the app name starts the top edge.
  * - `left`: the nav runs down the left side of the frame, under the logo and
  *   the app name.
- * - `plain`: no frame. The logo sits above the page, and with a school brand
- *   the page is white. Use it for a page that people outside the school staff
- *   fill out, such as a form for students.
+ * - `plain`: no frame. The logo sits above the page. With a school brand, the
+ *   page is white at the `logo-only` step, and a very light tint in the hue of
+ *   the main school color at the other two steps. Use it for a page that
+ *   people outside the school staff fill out, such as a form for students.
  */
 export type AppFrameLayout = "top" | "left" | "plain"
 
@@ -55,7 +57,7 @@ export type AppFrameBrand =
   | {
       /** The school whose brand the frame shows. */
       school: FrameSchool
-      /** The step on the branding scale. The `plain` layout ignores it. */
+      /** The step on the branding scale. */
       step: BrandingStep
     }
   | {
@@ -188,7 +190,7 @@ export function AppFrame({
         data-slot="app-frame"
         data-layout="plain"
         className="min-h-screen bg-(--frame-page) text-foreground"
-        style={{ "--frame-page": colors.page } as CSSProperties}
+        style={{ "--frame-page": school ? plainPageColor(school.main, step) : colors.page } as CSSProperties}
       >
         {school ? (
           <header className="flex h-14 items-center px-6">
