@@ -3,7 +3,7 @@ import { contrastRatio, fromOklch, normalizeHex, toOklch } from "./color.js"
 /**
  * A step on the branding scale, from least to most school color.
  *
- * - `logo-only`: a very light gray frame around a white page. The school color
+ * - `neutral-frame`: a very light gray frame around a white page. The school color
  *   appears in the logo, in charts and in selected controls.
  * - `tinted-frame`: a light frame in the hue of the main school color, around
  *   a white page. Every school gets the same lightness and the same small
@@ -12,11 +12,11 @@ import { contrastRatio, fromOklch, normalizeHex, toOklch } from "./color.js"
  * - `full-color-frame`: the main school color as the frame, around a white
  *   page. The logo shows in white.
  */
-export type BrandingStep = "logo-only" | "tinted-frame" | "full-color-frame"
+export type BrandingStep = "neutral-frame" | "tinted-frame" | "full-color-frame"
 
 /** The steps of the branding scale, from least to most school color. */
 export const BRANDING_STEPS: readonly BrandingStep[] = [
-  "logo-only",
+  "neutral-frame",
   "tinted-frame",
   "full-color-frame",
 ]
@@ -50,17 +50,17 @@ export type AppAudience = "students" | "staff"
 /**
  * The step on the branding scale for a school's first app, picked from who the
  * app is for. An app for students starts at `tinted-frame`, and an app for
- * staff starts at `logo-only`. It never returns `full-color-frame`.
+ * staff starts at `neutral-frame`. It never returns `full-color-frame`.
  *
  * @example
  * ```ts
  * defaultBrandingStep("students") // "tinted-frame"
- * defaultBrandingStep("staff") // "logo-only"
+ * defaultBrandingStep("staff") // "neutral-frame"
  * ```
  */
 export function defaultBrandingStep(audience: AppAudience): BrandingStep {
   if (audience === "students") return "tinted-frame"
-  if (audience === "staff") return "logo-only"
+  if (audience === "staff") return "neutral-frame"
   throw new Error(`Expected "students" or "staff", got "${String(audience)}"`)
 }
 
@@ -249,7 +249,7 @@ export function frameColors(color: string, step: BrandingStep): FrameColors {
 }
 
 export function plainPageColor(color: string, step: BrandingStep): string {
-  if (step === "logo-only") return PAGE
+  if (step === "neutral-frame") return PAGE
   const hue = schoolHue(normalizeHex(color))
   const lightness = isYellowHue(hue) ? YELLOW_PLAIN_PAGE_TINT_LIGHTNESS : PLAIN_PAGE_TINT_LIGHTNESS
   return fromOklch({ l: lightness, c: PLAIN_PAGE_TINT_STRENGTH, h: hue })
