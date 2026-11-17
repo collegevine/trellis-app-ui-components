@@ -86,7 +86,7 @@ describe("AppFrame", () => {
     expect(logoTag(html)).toContain("filter:brightness(0) invert(1)")
   })
 
-  it.each(["tinted-frame", "logo-only"] as const)(
+  it.each(["tinted-frame", "neutral-frame"] as const)(
     "shows the full-color logo unchanged at the %s step",
     (step) => {
       const html = render(<AppFrame school={depaul} step={step} />)
@@ -96,11 +96,11 @@ describe("AppFrame", () => {
   )
 
   it("shows the school name next to a logo that does not show it", () => {
-    expect(render(<AppFrame school={depaul} step="logo-only" />)).toContain(">DePaul University<")
+    expect(render(<AppFrame school={depaul} step="neutral-frame" />)).toContain(">DePaul University<")
   })
 
   it("leaves out the school name next to a wordmark", () => {
-    expect(render(<AppFrame school={barry} step="logo-only" />)).not.toContain(">Barry University<")
+    expect(render(<AppFrame school={barry} step="neutral-frame" />)).not.toContain(">Barry University<")
   })
 
   it("draws no frame in the plain layout and puts the logo above the page", () => {
@@ -115,8 +115,8 @@ describe("AppFrame", () => {
     expect(html.indexOf("depaul.svg")).toBeLessThan(html.indexOf("<p>Form</p>"))
   })
 
-  it("puts the form on a white page in the plain layout at the logo-only step", () => {
-    const html = render(<AppFrame school={depaul} step="logo-only" layout="plain" />)
+  it("puts the form on a white page in the plain layout at the neutral-frame step", () => {
+    const html = render(<AppFrame school={depaul} step="neutral-frame" layout="plain" />)
     expect(html).toContain("--frame-page:#ffffff")
     expect(html).toContain("bg-(--frame-page)")
   })
