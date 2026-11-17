@@ -2,7 +2,7 @@ import { renderToStaticMarkup } from "react-dom/server"
 import { MemoryRouter } from "react-router"
 import { describe, expect, it } from "vitest"
 
-import { frameColors } from "../lib/branding.js"
+import { frameColors, plainPageColor } from "../lib/branding.js"
 import { AppFrame, AppFrameNavLink, type FrameSchool } from "./app-frame.js"
 
 const northfield: FrameSchool = {
@@ -115,12 +115,18 @@ describe("AppFrame", () => {
     expect(html.indexOf("northfield.svg")).toBeLessThan(html.indexOf("<p>Form</p>"))
   })
 
-  it.each(["logo-only", "tinted-frame", "full-color-frame"] as const)(
-    "puts the form on a white page in the plain layout at the %s step",
+  it("puts the form on a white page in the plain layout at the logo-only step", () => {
+    const html = render(<AppFrame school={northfield} step="logo-only" layout="plain" />)
+    expect(html).toContain("--frame-page:#ffffff")
+    expect(html).toContain("bg-(--frame-page)")
+  })
+
+  it.each(["tinted-frame", "full-color-frame"] as const)(
+    "tints the form page in the school hue in the plain layout at the %s step",
     (step) => {
       const html = render(<AppFrame school={northfield} step={step} layout="plain" />)
-      expect(html).toContain("--frame-page:#ffffff")
-      expect(html).toContain("bg-(--frame-page)")
+      expect(html).toContain(`--frame-page:${plainPageColor(northfield.main, step)}`)
+      expect(html).not.toContain("--frame-page:#ffffff")
     },
   )
 })
