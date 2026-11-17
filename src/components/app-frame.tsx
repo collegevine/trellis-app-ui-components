@@ -123,9 +123,9 @@ function Logo({ school, look }: { school: FrameSchool; look: FrameColors["logo"]
  * The `step` sets how much school color the frame shows. Call
  * `defaultBrandingStep` for the step of a school's first app.
  *
- * - `logo-only`: a light gray frame around a lighter gray page.
- * - `tinted-frame`: a light tint of the main school color around a neutral page.
- * - `full-color-frame`: the main school color around a faintly tinted page, with
+ * - `logo-only`: a light gray frame around a white page.
+ * - `tinted-frame`: a light tint of the main school color around a white page.
+ * - `full-color-frame`: the main school color around a white page, with
  *   the logo in white.
  *
  * The selected nav item takes its fill from the frame, so it shows on every

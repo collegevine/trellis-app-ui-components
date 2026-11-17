@@ -143,11 +143,11 @@ describe("schoolTheme", () => {
 })
 
 describe("frameColors", () => {
-  it("draws the full-color frame in the main color, around a lightly tinted page", () => {
+  it("draws the full-color frame in the main color, around a white page", () => {
     const colors = frameColors("#c41230", "full-color-frame")
     expect(colors.frame).toBe("#c41230")
     expect(colors.frameText).toBe("#ffffff")
-    expect(colors.page).toBe("color-mix(in srgb, #c41230 2%, #ffffff)")
+    expect(colors.page).toBe("#ffffff")
     expect(colors.logo).toBe("white")
   })
 
@@ -163,18 +163,18 @@ describe("frameColors", () => {
     expect(colors.logo).toBe("black")
   })
 
-  it("tints the frame at the tinted step, around a neutral page", () => {
+  it("tints the frame at the tinted step, around a white page", () => {
     const colors = frameColors("#003da5", "tinted-frame")
     expect(colors.frame).toBe("color-mix(in srgb, #003da5 10%, #ffffff)")
-    expect(colors.page).toBe("#fafafa")
+    expect(colors.page).toBe("#ffffff")
     expect(colors.frameText).toBe("#111111")
     expect(colors.logo).toBe("original")
   })
 
-  it("draws a gray frame with no school color at the logo-only step", () => {
+  it("draws a gray frame with no school color around a white page at the logo-only step", () => {
     const colors = frameColors("#c41230", "logo-only")
     expect(colors.frame).toBe("#ebebeb")
-    expect(colors.page).toBe("#fafafa")
+    expect(colors.page).toBe("#ffffff")
     expect(JSON.stringify(colors)).not.toContain("#c41230")
   })
 
