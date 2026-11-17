@@ -44,8 +44,9 @@ export interface FrameSchool {
  *   the logo. Without a school, the app name starts the top edge.
  * - `left`: the nav runs down the left side of the frame, under the logo and
  *   the app name.
- * - `plain`: no frame. The logo sits above the page. Use it for a page that
- *   people outside the school staff fill out, such as a form for students.
+ * - `plain`: no frame. The logo sits above the page, and with a school brand
+ *   the page is white. Use it for a page that people outside the school staff
+ *   fill out, such as a form for students.
  */
 export type AppFrameLayout = "top" | "left" | "plain"
 
@@ -179,9 +180,16 @@ export function AppFrame({
     return () => observer.disconnect()
   }, [layout])
 
+  const colors = school ? frameColors(school.main, step) : unbrandedFrameColors()
+
   if (layout === "plain" || (!school && !nav)) {
     return (
-      <div data-slot="app-frame" data-layout="plain" className="min-h-screen bg-background text-foreground">
+      <div
+        data-slot="app-frame"
+        data-layout="plain"
+        className="min-h-screen bg-(--frame-page) text-foreground"
+        style={{ "--frame-page": colors.page } as CSSProperties}
+      >
         {school ? (
           <header className="flex h-14 items-center px-6">
             <Logo school={school} look="original" />
@@ -192,7 +200,6 @@ export function AppFrame({
     )
   }
 
-  const colors = school ? frameColors(school.main, step) : unbrandedFrameColors()
   const vars = {
     "--frame": colors.frame,
     "--frame-foreground": colors.frameText,
