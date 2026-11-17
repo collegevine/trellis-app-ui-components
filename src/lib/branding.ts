@@ -1,10 +1,13 @@
-import { contrastRatio, normalizeHex, toOklch } from "./color.js"
+import { contrastRatio, fromOklch, normalizeHex, toOklch } from "./color.js"
 
 /**
  * A step on the branding scale, from least to most school color.
  *
- * - `logo-only`: a light gray frame around a white page. The school color
- *   appears in the logo, in charts and in selected controls.
+ * - `logo-only`: a light neutral frame in the hue of the main school color,
+ *   around a white page. Every school gets the same lightness and the same
+ *   small amount of color, and a main color close to gray, black or white
+ *   gets a warm neutral. The school color appears in the logo, in charts and
+ *   in selected controls.
  * - `tinted-frame`: a frame with a light tint of the main school color, around
  *   a white page.
  * - `full-color-frame`: the main school color as the frame, around a white
@@ -173,8 +176,28 @@ export interface FrameColors {
   logo: "original" | "white" | "black"
 }
 
-const GRAY_FRAME = "#ebebeb"
 const PAGE = "#ffffff"
+
+const NEUTRAL_FRAME_LIGHTNESS = 0.9455
+const YELLOW_NEUTRAL_FRAME_LIGHTNESS = 0.9625
+const NEUTRAL_FRAME_STRENGTH = 0.018
+const WARM_NEUTRAL_HUE = 97
+
+function isYellowHue(hue: number): boolean {
+  return hue >= 105 && hue < 125
+}
+
+function neutralFrame(mainColor: string): Pick<FrameColors, "frame" | "navSelected" | "navHover"> {
+  const hue = isNeutral(mainColor) ? WARM_NEUTRAL_HUE : toOklch(mainColor).h
+  const lightness = isYellowHue(hue) ? YELLOW_NEUTRAL_FRAME_LIGHTNESS : NEUTRAL_FRAME_LIGHTNESS
+  const shade = (darker: number, strength: number) =>
+    fromOklch({ l: lightness - darker, c: NEUTRAL_FRAME_STRENGTH * strength, h: hue })
+  return {
+    frame: shade(0, 1),
+    navHover: shade(0.017, 1.115),
+    navSelected: shade(0.034, 1.31),
+  }
+}
 
 function tint(color: string, percent: number): string {
   return `color-mix(in srgb, ${color} ${percent}%, ${LIGHT_TEXT})`
@@ -203,7 +226,16 @@ export function frameColors(color: string, step: BrandingStep): FrameColors {
       logo: frameText === LIGHT_TEXT ? "white" : "black",
     }
   }
-  const frame = step === "tinted-frame" ? tint(mainColor, 10) : GRAY_FRAME
+  if (step === "logo-only") {
+    return {
+      ...neutralFrame(mainColor),
+      frameText: DARK_TEXT,
+      page: PAGE,
+      navSelectedText: DARK_TEXT,
+      logo: "original",
+    }
+  }
+  const frame = tint(mainColor, 10)
   return {
     frame,
     frameText: DARK_TEXT,
