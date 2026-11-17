@@ -159,6 +159,12 @@ describe("plainPageColor", () => {
     },
   )
 
+  it("tints a page with no frame more lightly for a yellow school color", () => {
+    const yellow = toOklch(plainPageColor("#c4d600", "tinted-frame"))
+    const red = toOklch(plainPageColor("#c41230", "tinted-frame"))
+    expect(yellow.l).toBeGreaterThan(red.l + 0.005)
+  })
+
   it("tints the page the same at the tinted and full-color steps", () => {
     expect(plainPageColor("#c41230", "tinted-frame")).toBe(plainPageColor("#c41230", "full-color-frame"))
   })
