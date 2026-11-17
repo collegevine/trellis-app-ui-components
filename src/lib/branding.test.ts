@@ -17,8 +17,8 @@ describe("defaultBrandingStep", () => {
     expect(defaultBrandingStep("students")).toBe("tinted-frame")
   })
 
-  it("starts an app for staff at logo only", () => {
-    expect(defaultBrandingStep("staff")).toBe("logo-only")
+  it("starts an app for staff at the neutral frame", () => {
+    expect(defaultBrandingStep("staff")).toBe("neutral-frame")
   })
 
   it("rejects a school color in place of an audience", () => {
@@ -36,7 +36,7 @@ describe("color values in the output", () => {
 
 describe("BRANDING_STEPS", () => {
   it("orders the steps from least to most school color", () => {
-    expect(BRANDING_STEPS).toEqual(["logo-only", "tinted-frame", "full-color-frame"])
+    expect(BRANDING_STEPS).toEqual(["neutral-frame", "tinted-frame", "full-color-frame"])
   })
 })
 
@@ -117,8 +117,8 @@ describe("schoolTheme", () => {
 })
 
 describe("plainPageColor", () => {
-  it("keeps a page with no frame white at the logo-only step", () => {
-    expect(plainPageColor("#c41230", "logo-only")).toBe("#ffffff")
+  it("keeps a page with no frame white at the neutral-frame step", () => {
+    expect(plainPageColor("#c41230", "neutral-frame")).toBe("#ffffff")
   })
 
   it.each(["tinted-frame", "full-color-frame"] as const)(
@@ -168,8 +168,8 @@ describe("frameColors", () => {
     expect(colors.logo).toBe("black")
   })
 
-  it("draws a very light gray frame with no school color around a white page at the logo-only step", () => {
-    const colors = frameColors("#c41230", "logo-only")
+  it("draws a very light gray frame with no school color around a white page at the neutral-frame step", () => {
+    const colors = frameColors("#c41230", "neutral-frame")
     expect(colors.frame).toBe("#fafafa")
     expect(colors.page).toBe("#ffffff")
     expect(colors.frameText).toBe("#111111")
@@ -177,8 +177,8 @@ describe("frameColors", () => {
     expect(JSON.stringify(colors)).not.toContain("#c41230")
   })
 
-  it("fills the selected nav item at the logo-only step with the frame darkened by 8%, and hover by 4%", () => {
-    const colors = frameColors("#003da5", "logo-only")
+  it("fills the selected nav item at the neutral-frame step with the frame darkened by 8%, and hover by 4%", () => {
+    const colors = frameColors("#003da5", "neutral-frame")
     expect(colors.navSelected).toBe("color-mix(in oklab, #fafafa, #000000 8%)")
     expect(colors.navHover).toBe("color-mix(in oklab, #fafafa, #000000 4%)")
   })

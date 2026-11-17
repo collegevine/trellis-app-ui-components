@@ -46,7 +46,7 @@ export interface FrameSchool {
  * - `left`: the nav runs down the left side of the frame, under the logo and
  *   the app name.
  * - `plain`: no frame. The logo sits above the page. With a school brand, the
- *   page is white at the `logo-only` step, and a very light tint in the hue of
+ *   page is white at the `neutral-frame` step, and a very light tint in the hue of
  *   the main school color at the other two steps. Use it for a page that
  *   people outside the school staff fill out, such as a form for students.
  */
@@ -127,7 +127,7 @@ function Logo({ school, look }: { school: FrameSchool; look: FrameColors["logo"]
  * `defaultBrandingStep` with who the app is for to get the step of a school's
  * first app.
  *
- * - `logo-only`: a very light gray frame around a white page.
+ * - `neutral-frame`: a very light gray frame around a white page.
  * - `tinted-frame`: a light frame in the hue of the main school color, around
  *   a white page.
  * - `full-color-frame`: the main school color around a white page, with
