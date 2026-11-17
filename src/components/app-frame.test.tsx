@@ -7,14 +7,13 @@ import { AppFrame, AppFrameNavLink, type FrameSchool } from "./app-frame.js"
 const depaul: FrameSchool = {
   name: "DePaul University",
   main: "#003da5",
-  logo: { src: "/logos/depaul.svg" },
-  whiteLogo: { src: "/logos/depaul-white.svg" },
+  logos: [{ src: "/logos/depaul.svg" }, { src: "/logos/depaul-white.svg" }],
 }
 
 const barry: FrameSchool = {
   name: "Barry University",
   main: "#c41230",
-  logo: { src: "/logos/barry.svg", showsName: true },
+  logos: [{ src: "/logos/barry.svg", showsName: true }],
 }
 
 function render(element: React.ReactElement, path = "/") {
@@ -76,10 +75,8 @@ describe("AppFrame", () => {
     expect(render(<AppFrame school={barry} step="full-color-frame" layout="plain" />)).not.toContain("<style>")
   })
 
-  it("shows the approved white logo on the full-color frame", () => {
-    const html = render(<AppFrame school={depaul} step="full-color-frame" />)
-    expect(logoTag(html)).toContain("depaul-white.svg")
-    expect(logoTag(html)).not.toContain("filter")
+  it("holds the logo out of sight until the frame has measured it", () => {
+    expect(logoTag(render(<AppFrame school={depaul} step="logo-only" />))).toContain("visibility:hidden")
   })
 
   it("turns the full-color logo white on the full-color frame when there is no white logo", () => {
