@@ -178,9 +178,9 @@ export interface FrameColors {
 
 const PAGE = "#ffffff"
 
-const NEUTRAL_FRAME_LIGHTNESS = 0.9455
-const YELLOW_NEUTRAL_FRAME_LIGHTNESS = 0.9625
-const NEUTRAL_FRAME_STRENGTH = 0.018
+const NEUTRAL_FRAME_LIGHTNESS = 0.9625
+const YELLOW_NEUTRAL_FRAME_LIGHTNESS = 0.98
+const NEUTRAL_FRAME_STRENGTH = 0.0159
 const WARM_NEUTRAL_HUE = 97
 
 function isYellowHue(hue: number): boolean {
@@ -194,8 +194,8 @@ function neutralFrame(mainColor: string): Pick<FrameColors, "frame" | "navSelect
     fromOklch({ l: lightness - darker, c: NEUTRAL_FRAME_STRENGTH * strength, h: hue })
   return {
     frame: shade(0, 1),
-    navHover: shade(0.017, 1.115),
-    navSelected: shade(0.034, 1.31),
+    navHover: shade(0.017, 1.13),
+    navSelected: shade(0.034, 1.26),
   }
 }
 
