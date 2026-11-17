@@ -124,7 +124,8 @@ function Logo({ school, look }: { school: FrameSchool; look: FrameColors["logo"]
  * side, and the drawer closes when a nav item opens another page.
  *
  * The `step` sets how much school color the frame shows. Call
- * `defaultBrandingStep` for the step of a school's first app.
+ * `defaultBrandingStep` with who the app is for to get the step of a school's
+ * first app.
  *
  * - `logo-only`: a very light gray frame around a white page.
  * - `tinted-frame`: a light frame in the hue of the main school color, around
@@ -140,7 +141,7 @@ function Logo({ school, look }: { school: FrameSchool; look: FrameColors["logo"]
  * ```tsx
  * <AppFrame
  *   school={{ name: "DePaul University", main: brand.main, logo: { src: "/logo.svg" } }}
- *   step={defaultBrandingStep(brand.main)}
+ *   step={defaultBrandingStep("staff")}
  *   appName="Admissions dashboard"
  *   nav={
  *     <>

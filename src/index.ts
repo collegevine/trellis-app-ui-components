@@ -43,6 +43,7 @@ export {
   schoolTheme,
   selectedFill,
   unbrandedFrameColors,
+  type AppAudience,
   type BrandingStep,
   type Fill,
   type FrameColors,
