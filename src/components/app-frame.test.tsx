@@ -111,11 +111,20 @@ describe("AppFrame", () => {
         <p>Form</p>
       </AppFrame>
     )
-    expect(html).not.toContain("--frame")
+    expect(html).not.toContain("--frame:")
     expect(html).not.toContain("By college")
     expect(logoTag(html)).toContain("depaul.svg")
     expect(html.indexOf("depaul.svg")).toBeLessThan(html.indexOf("<p>Form</p>"))
   })
+
+  it.each(["logo-only", "tinted-frame", "full-color-frame"] as const)(
+    "puts the form on a white page in the plain layout at the %s step",
+    (step) => {
+      const html = render(<AppFrame school={depaul} step={step} layout="plain" />)
+      expect(html).toContain("--frame-page:#ffffff")
+      expect(html).toContain("bg-(--frame-page)")
+    },
+  )
 })
 
 describe("AppFrameNavLink", () => {
@@ -162,7 +171,8 @@ describe("AppFrame with no school brand", () => {
         <p>Page</p>
       </AppFrame>
     )
-    expect(html).not.toContain("--frame")
+    expect(html).not.toContain("--frame:")
+    expect(html).toContain("--frame-page:var(--background)")
     expect(html).not.toContain("<header")
     expect(html).toContain("<p>Page</p>")
   })
