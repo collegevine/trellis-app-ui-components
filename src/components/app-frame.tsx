@@ -76,7 +76,7 @@ export type AppFrameProps = AppFrameBrand & {
   nav?: ReactNode
   /** The page. */
   children?: ReactNode
-  /** Classes to merge onto the page area, the part that scrolls. */
+  /** Classes to merge onto the page area. */
   className?: string
 }
 
@@ -109,6 +109,9 @@ function Logo({ school, look }: { school: FrameSchool; look: FrameColors["logo"]
  *
  * Without a `school`, the frame takes the CollegeVine look, and the app name
  * sits where the logo goes. An app with no school and no nav gets no frame.
+ *
+ * Only the page scrolls, and the frame stays in place. The bottom edge of the
+ * frame comes into view when the user scrolls to the end of the page.
  *
  * Below tablet width, the top nav and the left nav both give way to a menu
  * button in the top edge. The button opens the nav in a drawer from the left
@@ -228,18 +231,20 @@ export function AppFrame({
   )
   const page = (
     <main
+      ref={scroller}
+      data-slot="app-frame-scroll"
       className={cn(
-        "flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden rounded-xl bg-(--frame-page) text-foreground",
-        layout === "left" ? "mx-2 mb-2 md:my-2 md:ml-0" : "mx-2 mb-2"
+        "flex min-h-0 min-w-0 flex-1 flex-col overflow-y-auto rounded-t-xl",
+        layout === "left" ? "mx-2 md:mt-2 md:ml-0" : "mx-2"
       )}
     >
       <div
-        ref={scroller}
         data-slot="app-frame-page"
-        className={cn("min-h-0 flex-1 overflow-y-auto", className)}
+        className={cn("shrink-0 grow rounded-xl bg-(--frame-page) text-foreground", className)}
       >
         {children}
       </div>
+      <div aria-hidden="true" className="h-2 shrink-0" />
     </main>
   )
 
