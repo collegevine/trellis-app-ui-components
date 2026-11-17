@@ -1,4 +1,6 @@
-import { useEffect, useRef, type CSSProperties, type ReactNode } from "react"
+import { Drawer } from "@base-ui/react/drawer"
+import { List } from "@phosphor-icons/react"
+import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react"
 import { NavLink, useLocation, type NavLinkProps } from "react-router"
 
 import {
@@ -108,6 +110,10 @@ function Logo({ school, look }: { school: FrameSchool; look: FrameColors["logo"]
  * Without a `school`, the frame takes the CollegeVine look, and the app name
  * sits where the logo goes. An app with no school and no nav gets no frame.
  *
+ * Below tablet width, the top nav and the left nav both give way to a menu
+ * button in the top edge. The button opens the nav in a drawer from the left
+ * side, and the drawer closes when a nav item opens another page.
+ *
  * The `step` sets how much school color the frame shows. Call
  * `defaultBrandingStep` for the step of a school's first app.
  *
@@ -148,8 +154,10 @@ export function AppFrame({
 }: AppFrameProps) {
   const { pathname } = useLocation()
   const scroller = useRef<HTMLDivElement>(null)
+  const [menuOpen, setMenuOpen] = useState(false)
   useEffect(() => {
     if (scroller.current) scroller.current.scrollTop = 0
+    setMenuOpen(false)
   }, [pathname])
 
   if (layout === "plain" || (!school && !nav)) {
@@ -179,11 +187,50 @@ export function AppFrame({
   const canvas = (
     <style>{`html{background-color:${colors.frame};scrollbar-gutter:auto}body{background-color:transparent}`}</style>
   )
+  const sideNav = (
+    <>
+      <div className="flex h-14 shrink-0 items-center px-6">{logo}</div>
+      {school && appName ? <div className="px-6 pt-2 pb-2 text-sm font-semibold">{appName}</div> : null}
+      {nav ? (
+        <nav data-slot="app-frame-nav" className="flex flex-col gap-0.5 px-3 pb-3">
+          {nav}
+        </nav>
+      ) : null}
+    </>
+  )
+  const mobileBar = (
+    <div data-slot="app-frame-mobile-bar" className="flex h-14 shrink-0 items-center gap-2 px-2 md:hidden">
+      {nav ? (
+        <Drawer.Root open={menuOpen} onOpenChange={setMenuOpen} swipeDirection="left">
+          <Drawer.Trigger
+            aria-label="Open menu"
+            className="inline-flex size-10 shrink-0 items-center justify-center rounded-md text-(--frame-foreground) hover:bg-(--frame-nav-hover)"
+          >
+            <List className="size-5" aria-hidden="true" />
+          </Drawer.Trigger>
+          <Drawer.Portal>
+            <Drawer.Backdrop className="fixed inset-0 bg-foreground/30 transition-opacity duration-200 data-[ending-style]:opacity-0 data-[starting-style]:opacity-0" />
+            <Drawer.Viewport className="fixed inset-0">
+              <Drawer.Popup
+                data-slot="app-frame-menu"
+                style={vars}
+                className="fixed inset-y-0 left-0 flex w-72 max-w-full translate-x-(--drawer-swipe-movement-x,0px) flex-col overflow-y-auto bg-(--frame) text-(--frame-foreground) shadow-lg outline-none transition-transform duration-200 ease-out data-[ending-style]:-translate-x-full data-[starting-style]:-translate-x-full"
+              >
+                <Drawer.Title className="sr-only">{appName ?? school?.name ?? "Menu"}</Drawer.Title>
+                {sideNav}
+              </Drawer.Popup>
+            </Drawer.Viewport>
+          </Drawer.Portal>
+        </Drawer.Root>
+      ) : null}
+      <span className={cn("flex min-w-0 items-center", nav ? "" : "px-2")}>{logo}</span>
+    </div>
+  )
   const page = (
     <main
       className={cn(
         "flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden rounded-xl bg-(--frame-page) text-foreground",
-        layout === "left" ? "my-2 mr-2" : "mx-2 mb-2"
+        layout === "left" ? "mx-2 mb-2 md:my-2 md:ml-0" : "mx-2 mb-2"
       )}
     >
       <div
@@ -203,18 +250,11 @@ export function AppFrame({
         data-layout="left"
         data-step={step ?? "unbranded"}
         style={vars}
-        className="flex h-dvh overflow-hidden bg-(--frame) text-(--frame-foreground)"
+        className="flex h-dvh flex-col overflow-hidden bg-(--frame) text-(--frame-foreground) md:flex-row"
       >
         {canvas}
-        <aside className="flex w-60 shrink-0 flex-col overflow-y-auto">
-          <div className="flex h-14 items-center px-6">{logo}</div>
-          {school && appName ? <div className="px-6 pt-2 pb-2 text-sm font-semibold">{appName}</div> : null}
-          {nav ? (
-            <nav data-slot="app-frame-nav" className="flex flex-col gap-0.5 px-3">
-              {nav}
-            </nav>
-          ) : null}
-        </aside>
+        {mobileBar}
+        <aside className="hidden w-60 shrink-0 flex-col overflow-y-auto md:flex">{sideNav}</aside>
         {page}
       </div>
     )
@@ -229,7 +269,8 @@ export function AppFrame({
       className="flex h-dvh flex-col overflow-hidden bg-(--frame) text-(--frame-foreground)"
     >
       {canvas}
-      <header className="flex h-14 shrink-0 items-center gap-4 px-4">
+      {mobileBar}
+      <header className="hidden h-14 shrink-0 items-center gap-4 px-4 md:flex">
         {logo}
         {school && title ? (
           <>
