@@ -77,7 +77,7 @@ describe("AppFrame", () => {
   })
 
   it("holds the logo out of sight until the frame has measured it", () => {
-    expect(logoTag(render(<AppFrame school={depaul} step="logo-only" />))).toContain("visibility:hidden")
+    expect(logoTag(render(<AppFrame school={depaul} step="neutral-frame" />))).toContain("visibility:hidden")
   })
 
   it("turns the full-color logo white on the full-color frame when there is no white logo", () => {
