@@ -189,6 +189,8 @@ function isYellowHue(hue: number): boolean {
 }
 
 const PLAIN_PAGE_TINT_LIGHTNESS = 0.98
+const YELLOW_PLAIN_PAGE_TINT_LIGHTNESS = 0.9885
+const PLAIN_PAGE_TINT_STRENGTH = 0.0138
 
 function schoolHue(mainColor: string): number {
   return isNeutral(mainColor) ? WARM_NEUTRAL_HUE : toOklch(mainColor).h
@@ -255,7 +257,9 @@ export function frameColors(color: string, step: BrandingStep): FrameColors {
 
 export function plainPageColor(color: string, step: BrandingStep): string {
   if (step === "logo-only") return PAGE
-  return fromOklch({ l: PLAIN_PAGE_TINT_LIGHTNESS, c: HUE_FRAME_STRENGTH, h: schoolHue(normalizeHex(color)) })
+  const hue = schoolHue(normalizeHex(color))
+  const lightness = isYellowHue(hue) ? YELLOW_PLAIN_PAGE_TINT_LIGHTNESS : PLAIN_PAGE_TINT_LIGHTNESS
+  return fromOklch({ l: lightness, c: PLAIN_PAGE_TINT_STRENGTH, h: hue })
 }
 
 /**
