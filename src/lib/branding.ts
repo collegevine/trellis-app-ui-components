@@ -38,37 +38,30 @@ function isNeutral(color: string): boolean {
   return toOklch(color).c < NEUTRAL_CHROMA
 }
 
-function isWarm(hue: number): boolean {
-  return hue < 100 || hue >= 330
-}
+/**
+ * Who an app is for.
+ *
+ * - `students`: students or other people outside the school staff, such as
+ *   applicants, admitted students, families, alumni or donors.
+ * - `staff`: school staff. Use it too when the audience is mixed or unclear.
+ */
+export type AppAudience = "students" | "staff"
 
 /**
- * The step on the branding scale for a school's first app, picked from the
- * main school color. The first test that matches decides:
- *
- * 1. A color close to gray, black or white: `tinted-frame`.
- * 2. A warm color (red, maroon, pink, orange, brown, yellow or gold):
- *    `logo-only`.
- * 3. A light, saturated color of any hue, such as lime green or a bright
- *    blue: `logo-only`.
- * 4. Any other color, which is a dark or muted cool color such as navy, dark
- *    green or purple: `tinted-frame`.
- *
- * It never returns `full-color-frame`. Call it instead of judging the color
- * by eye, so that close colors always get the same step.
+ * The step on the branding scale for a school's first app, picked from who the
+ * app is for. An app for students starts at `tinted-frame`, and an app for
+ * staff starts at `logo-only`. It never returns `full-color-frame`.
  *
  * @example
  * ```ts
- * defaultBrandingStep("#003da5") // "tinted-frame"
- * defaultBrandingStep("#c41230") // "logo-only"
+ * defaultBrandingStep("students") // "tinted-frame"
+ * defaultBrandingStep("staff") // "logo-only"
  * ```
  */
-export function defaultBrandingStep(mainColor: string): BrandingStep {
-  const { l, c, h } = toOklch(mainColor)
-  if (c < NEUTRAL_CHROMA) return "tinted-frame"
-  if (isWarm(h)) return "logo-only"
-  if (l >= 0.6 && c >= 0.1) return "logo-only"
-  return "tinted-frame"
+export function defaultBrandingStep(audience: AppAudience): BrandingStep {
+  if (audience === "students") return "tinted-frame"
+  if (audience === "staff") return "logo-only"
+  throw new Error(`Expected "students" or "staff", got "${String(audience)}"`)
 }
 
 /**
