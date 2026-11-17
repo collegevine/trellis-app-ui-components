@@ -41,12 +41,21 @@ function renderApp() {
 }
 
 describe("AppFrame scrolling", () => {
-  it("scrolls the page area inside a rounded area that clips it, so the scrollbar follows the corners", () => {
+  it("scrolls the page inside an area with rounded top corners, so the scrollbar follows them", () => {
     renderApp()
+    const scroll = container.querySelector<HTMLElement>('[data-slot="app-frame-scroll"]')
+    expect(scroll?.className).toContain("overflow-y-auto")
+    expect(scroll?.className).toMatch(/(^|\s)rounded-t-xl(\s|$)/)
+  })
+
+  it("scrolls the page's bottom edge and the frame below it with the page, so they show only at the end", () => {
+    renderApp()
+    const scroll = container.querySelector<HTMLElement>('[data-slot="app-frame-scroll"]')
     const page = container.querySelector<HTMLElement>('[data-slot="app-frame-page"]')
-    expect(page?.className).toContain("overflow-y-auto")
-    expect(page?.parentElement?.className).toMatch(/rounded-xl/)
-    expect(page?.parentElement?.className).toMatch(/overflow-hidden/)
+    expect(page?.parentElement).toBe(scroll)
+    expect(page?.className).toMatch(/(^|\s)rounded-xl(\s|$)/)
+    expect(page?.nextElementSibling?.className).toMatch(/(^|\s)h-2(\s|$)/)
+    expect(scroll?.className).not.toMatch(/(^|\s)mb-2(\s|$)/)
   })
 
   it("keeps the frame to the window's height, so the window itself does not scroll", () => {
@@ -58,7 +67,7 @@ describe("AppFrame scrolling", () => {
 
   it("scrolls the page area back to the top when the page changes", async () => {
     const router = renderApp()
-    const page = container.querySelector<HTMLElement>('[data-slot="app-frame-page"]')!
+    const page = container.querySelector<HTMLElement>('[data-slot="app-frame-scroll"]')!
     page.scrollTop = 300
     expect(page.scrollTop).toBe(300)
     await act(() => router.navigate("/by-college"))
