@@ -38,37 +38,30 @@ function isNeutral(color: string): boolean {
   return toOklch(color).c < NEUTRAL_CHROMA
 }
 
-function isWarm(hue: number): boolean {
-  return hue < 100 || hue >= 330
-}
+/**
+ * Who an app is for.
+ *
+ * - `students`: students or other people outside the school staff, such as
+ *   applicants, admitted students, families, alumni or donors.
+ * - `staff`: school staff. Use it too when the audience is mixed or unclear.
+ */
+export type AppAudience = "students" | "staff"
 
 /**
- * The step on the branding scale for a school's first app, picked from the
- * main school color. The first test that matches decides:
- *
- * 1. A color close to gray, black or white: `tinted-frame`.
- * 2. A warm color (red, maroon, pink, orange, brown, yellow or gold):
- *    `logo-only`.
- * 3. A light, saturated color of any hue, such as lime green or a bright
- *    blue: `logo-only`.
- * 4. Any other color, which is a dark or muted cool color such as navy, dark
- *    green or purple: `tinted-frame`.
- *
- * It never returns `full-color-frame`. Call it instead of judging the color
- * by eye, so that close colors always get the same step.
+ * The step on the branding scale for a school's first app, picked from who the
+ * app is for. An app for students starts at `tinted-frame`, and an app for
+ * staff starts at `logo-only`. It never returns `full-color-frame`.
  *
  * @example
  * ```ts
- * defaultBrandingStep("#003da5") // "tinted-frame"
- * defaultBrandingStep("#c41230") // "logo-only"
+ * defaultBrandingStep("students") // "tinted-frame"
+ * defaultBrandingStep("staff") // "logo-only"
  * ```
  */
-export function defaultBrandingStep(mainColor: string): BrandingStep {
-  const { l, c, h } = toOklch(mainColor)
-  if (c < NEUTRAL_CHROMA) return "tinted-frame"
-  if (isWarm(h)) return "logo-only"
-  if (l >= 0.6 && c >= 0.1) return "logo-only"
-  return "tinted-frame"
+export function defaultBrandingStep(audience: AppAudience): BrandingStep {
+  if (audience === "students") return "tinted-frame"
+  if (audience === "staff") return "logo-only"
+  throw new Error(`Expected "students" or "staff", got "${String(audience)}"`)
 }
 
 /**
@@ -188,8 +181,16 @@ function isYellowHue(hue: number): boolean {
   return hue >= 105 && hue < 125
 }
 
+const PLAIN_PAGE_TINT_LIGHTNESS = 0.98
+const YELLOW_PLAIN_PAGE_TINT_LIGHTNESS = 0.9885
+const PLAIN_PAGE_TINT_STRENGTH = 0.0138
+
+function schoolHue(mainColor: string): number {
+  return isNeutral(mainColor) ? WARM_NEUTRAL_HUE : toOklch(mainColor).h
+}
+
 function hueFrame(mainColor: string): Pick<FrameColors, "frame" | "navSelected" | "navHover"> {
-  const hue = isNeutral(mainColor) ? WARM_NEUTRAL_HUE : toOklch(mainColor).h
+  const hue = schoolHue(mainColor)
   const lightness = isYellowHue(hue) ? YELLOW_HUE_FRAME_LIGHTNESS : HUE_FRAME_LIGHTNESS
   const shade = (darker: number, strength: number) =>
     fromOklch({ l: lightness - darker, c: HUE_FRAME_STRENGTH * strength, h: hue })
@@ -245,6 +246,13 @@ export function frameColors(color: string, step: BrandingStep): FrameColors {
     navHover: darken(LIGHT_GRAY_FRAME, 4),
     logo: "original",
   }
+}
+
+export function plainPageColor(color: string, step: BrandingStep): string {
+  if (step === "logo-only") return PAGE
+  const hue = schoolHue(normalizeHex(color))
+  const lightness = isYellowHue(hue) ? YELLOW_PLAIN_PAGE_TINT_LIGHTNESS : PLAIN_PAGE_TINT_LIGHTNESS
+  return fromOklch({ l: lightness, c: PLAIN_PAGE_TINT_STRENGTH, h: hue })
 }
 
 /**

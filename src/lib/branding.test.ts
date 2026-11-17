@@ -1,9 +1,11 @@
 import { describe, expect, it } from "vitest"
 
 import {
+  type AppAudience,
   BRANDING_STEPS,
   defaultBrandingStep,
   frameColors,
+  plainPageColor,
   readableText,
   schoolTheme,
   selectedFill,
@@ -11,44 +13,16 @@ import {
 import { contrastRatio, type Oklch, toOklch } from "./color.js"
 
 describe("defaultBrandingStep", () => {
-  it.each([
-    ["DePaul blue", "#003da5", "tinted-frame"],
-    ["Rollins navy", "#003d79", "tinted-frame"],
-    ["Portland purple", "#1e1656", "tinted-frame"],
-    ["Wayne State green", "#0c5449", "tinted-frame"],
-    ["Emerson purple", "#5f249f", "tinted-frame"],
-    ["Barry red", "#c41230", "logo-only"],
-    ["Michigan Tech gold", "#ffcd00", "logo-only"],
-    ["Sweet Briar pink", "#ed2b74", "logo-only"],
-    ["Pacific orange", "#ff671d", "logo-only"],
-    ["UT Austin burnt orange", "#bf5700", "logo-only"],
-    ["Marshall light green", "#00b140", "logo-only"],
-  ])("picks the agreed step for %s", (_school, color, step) => {
-    expect(defaultBrandingStep(color)).toBe(step)
+  it("starts an app for students at the tinted frame", () => {
+    expect(defaultBrandingStep("students")).toBe("tinted-frame")
   })
 
-  it.each(["#000000", "#111111", "#808080", "#ffffff"])(
-    "picks the tinted frame for black, gray and white (%s)",
-    (color) => {
-      expect(defaultBrandingStep(color)).toBe("tinted-frame")
-    }
-  )
-
-  it("never picks the full-color frame", () => {
-    for (let red = 0; red < 256; red += 51)
-      for (let green = 0; green < 256; green += 51)
-        for (let blue = 0; blue < 256; blue += 51) {
-          const color = `#${[red, green, blue].map((v) => v.toString(16).padStart(2, "0")).join("")}`
-          expect(defaultBrandingStep(color)).not.toBe("full-color-frame")
-        }
+  it("starts an app for staff at logo only", () => {
+    expect(defaultBrandingStep("staff")).toBe("logo-only")
   })
 
-  it("accepts three-digit hex and no leading #", () => {
-    expect(defaultBrandingStep("f00")).toBe("logo-only")
-  })
-
-  it("rejects a value that is not a hex color", () => {
-    expect(() => defaultBrandingStep("navy")).toThrow(/hex color/)
+  it("rejects a school color in place of an audience", () => {
+    expect(() => defaultBrandingStep("#003da5" as AppAudience)).toThrow(/"students" or "staff"/)
   })
 })
 
@@ -139,6 +113,37 @@ describe("schoolTheme", () => {
     for (const name of ["--primary", "--primary-foreground", "--destructive", "--ring", "--radius"]) {
       expect(theme).not.toHaveProperty(name)
     }
+  })
+})
+
+describe("plainPageColor", () => {
+  it("keeps a page with no frame white at the logo-only step", () => {
+    expect(plainPageColor("#c41230", "logo-only")).toBe("#ffffff")
+  })
+
+  it.each(["tinted-frame", "full-color-frame"] as const)(
+    "tints a page with no frame very lightly in the school hue at the %s step",
+    (step) => {
+      const page = toOklch(plainPageColor("#c41230", step))
+      expect(page.l).toBeCloseTo(0.98, 2)
+      expect(page.c).toBeGreaterThan(0.005)
+      expect(page.c).toBeLessThan(0.02)
+      expect(Math.abs(page.h - toOklch("#c41230").h)).toBeLessThan(5)
+    },
+  )
+
+  it("tints a page with no frame more lightly for a yellow school color", () => {
+    const yellow = toOklch(plainPageColor("#c4d600", "tinted-frame"))
+    const red = toOklch(plainPageColor("#c41230", "tinted-frame"))
+    expect(yellow.l).toBeGreaterThan(red.l + 0.005)
+  })
+
+  it("tints the page the same at the tinted and full-color steps", () => {
+    expect(plainPageColor("#c41230", "tinted-frame")).toBe(plainPageColor("#c41230", "full-color-frame"))
+  })
+
+  it("gives a main color close to gray a warm tint", () => {
+    expect(Math.abs(toOklch(plainPageColor("#333333", "tinted-frame")).h - 97)).toBeLessThan(5)
   })
 })
 
