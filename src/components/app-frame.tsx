@@ -9,9 +9,11 @@ import {
   type BrandingStep,
   type FrameColors,
 } from "../lib/branding.js"
+import { pickLogo, type LogoSpace } from "../lib/logo.js"
+import { measureLogo, type LogoMeasurement } from "../lib/measure-logo.js"
 import { cn } from "../lib/utils.js"
 
-/** A logo image. */
+/** One version of a school logo, such as the one-line logo, the stacked logo or the white logo. */
 export interface SchoolLogo {
   /** The address of the image. */
   src: string
@@ -28,13 +30,15 @@ export interface FrameSchool {
   name: string
   /** The main school color, as a hex value. */
   main: string
-  /** The school's full-color logo. */
-  logo: SchoolLogo
   /**
-   * The school's approved white logo, for the full-color frame. Without it,
-   * the frame turns the full-color logo white.
+   * Every version of the school logo that the app has, in any order. The frame
+   * removes the empty space around each logo and sizes each one so that a wide
+   * logo and a compact logo cover about the same area. In each place, it shows
+   * the widest version that is still large enough to read, so a one-line logo
+   * gives way to a stacked logo where space is short. The full-color frame
+   * shows a white version, or turns another version white when there is none.
    */
-  whiteLogo?: SchoolLogo
+  logos: SchoolLogo[]
 }
 
 /**
@@ -84,22 +88,102 @@ export type AppFrameProps = AppFrameBrand & {
 const WHITE_LOGO = "brightness(0) invert(1)"
 const BLACK_LOGO = "brightness(0)"
 
-function Logo({ school, look }: { school: FrameSchool; look: FrameColors["logo"] }) {
-  const white = look === "white" ? school.whiteLogo : undefined
-  const logo = white ?? school.logo
-  const filter = white || look === "original" ? undefined : look === "white" ? WHITE_LOGO : BLACK_LOGO
-  return (
-    <span className="flex min-w-0 items-center gap-2.5">
+const TOP_EDGE: LogoSpace = { area: 3920, minHeight: 16, maxHeight: 36, maxWidth: 280 }
+const LEFT_NAV: LogoSpace = { area: 3920, minHeight: 16, maxHeight: 36, maxWidth: 192 }
+const PHONE_BAR: LogoSpace = { area: 3920, minHeight: 16, maxHeight: 36, maxWidth: 220 }
+const ABOVE_PAGE: LogoSpace = { area: 5120, minHeight: 18, maxHeight: 44, maxWidth: 320 }
+
+type Measurements = Map<string, LogoMeasurement | null>
+
+function useLogoMeasurements(logos: SchoolLogo[]): Measurements | null {
+  const key = logos.map((logo) => logo.src).join("\n")
+  const [measurements, setMeasurements] = useState<{ key: string; value: Measurements } | null>(null)
+  useEffect(() => {
+    let current = true
+    Promise.all(logos.map((logo) => measureLogo(logo))).then((results) => {
+      if (!current) return
+      setMeasurements({ key, value: new Map(logos.map((logo, i) => [logo.src, results[i] ?? null])) })
+    })
+    return () => {
+      current = false
+    }
+  }, [key])
+  return measurements?.key === key ? measurements.value : null
+}
+
+function Logo({
+  school,
+  look,
+  space,
+  measurements,
+}: {
+  school: FrameSchool
+  look: FrameColors["logo"]
+  space: LogoSpace
+  measurements: Measurements | null
+}) {
+  const measured = measurements
+    ? school.logos.flatMap((logo) => {
+        const m = measurements.get(logo.src)
+        return m ? [m] : []
+      })
+    : []
+  const choice = pickLogo(measured, space, look === "white")
+  const fallback = school.logos[0]
+  const logo = choice?.logo ?? fallback
+  if (!logo) return null
+  const filter =
+    look === "black" || (choice ? choice.recolor && look === "original" : false)
+      ? BLACK_LOGO
+      : look === "white" && (!choice || choice.recolor)
+        ? WHITE_LOGO
+        : undefined
+  const name = logo.showsName ? null : <span className="truncate text-sm font-semibold">{school.name}</span>
+  if (!choice) {
+    return (
+      <span className="flex min-w-0 items-center gap-2.5">
+        <img
+          data-slot="app-frame-logo"
+          src={logo.src}
+          alt={`${school.name} logo`}
+          className="h-7 w-auto shrink-0"
+          style={{ filter, visibility: measurements ? undefined : "hidden" }}
+        />
+        {name}
+      </span>
+    )
+  }
+  const { width, height } = choice.size
+  const { crop, cleanSrc } = choice.measured
+  const image = cleanSrc ? (
+    <img
+      data-slot="app-frame-logo"
+      src={cleanSrc}
+      alt={`${school.name} logo`}
+      className="block shrink-0"
+      style={{ width, height, filter }}
+    />
+  ) : (
+    <span className="relative block shrink-0 overflow-hidden" style={{ width, height }}>
       <img
         data-slot="app-frame-logo"
         src={logo.src}
         alt={`${school.name} logo`}
-        className={cn("w-auto shrink-0", logo.showsName ? "h-7" : "h-8")}
-        style={filter ? { filter } : undefined}
+        className="absolute max-w-none"
+        style={{
+          width: width / crop.width,
+          height: height / crop.height,
+          left: -(crop.x * width) / crop.width,
+          top: -(crop.y * height) / crop.height,
+          filter,
+        }}
       />
-      {logo.showsName ? null : (
-        <span className="truncate text-sm font-semibold">{school.name}</span>
-      )}
+    </span>
+  )
+  return (
+    <span className="flex min-w-0 items-center gap-2.5">
+      {image}
+      {name}
     </span>
   )
 }
@@ -137,7 +221,7 @@ function Logo({ school, look }: { school: FrameSchool; look: FrameColors["logo"]
  * @example
  * ```tsx
  * <AppFrame
- *   school={{ name: "Northfield University", main: brand.main, logo: { src: "/logo.svg" } }}
+ *   school={{ name: "Northfield University", main: brand.main, logos: brand.logos }}
  *   step={defaultBrandingStep(brand.main)}
  *   appName="Admissions dashboard"
  *   nav={
@@ -181,6 +265,9 @@ export function AppFrame({
   }, [layout])
 
   const colors = school ? frameColors(school.main, step) : unbrandedFrameColors()
+  const measurements = useLogoMeasurements(school?.logos ?? [])
+  const logoIn = (space: LogoSpace, look: FrameColors["logo"] = colors.logo) =>
+    school ? <Logo school={school} look={look} space={space} measurements={measurements} /> : null
 
   if (layout === "plain" || (!school && !nav)) {
     return (
@@ -192,7 +279,7 @@ export function AppFrame({
       >
         {school ? (
           <header className="flex h-14 items-center px-6">
-            <Logo school={school} look="original" />
+            {logoIn(ABOVE_PAGE, "original")}
           </header>
         ) : null}
         <main className={className}>{children}</main>
@@ -209,13 +296,12 @@ export function AppFrame({
     "--frame-nav-hover": colors.navHover,
   } as CSSProperties
   const title = appName ? <span className="shrink-0 text-sm font-semibold">{appName}</span> : null
-  const logo = school ? <Logo school={school} look={colors.logo} /> : title
   const canvas = (
     <style>{`html{background-color:${colors.frame};scrollbar-gutter:auto}body{background-color:transparent}`}</style>
   )
   const sideNav = (
     <>
-      <div className="flex h-14 shrink-0 items-center px-6">{logo}</div>
+      <div className="flex h-14 shrink-0 items-center px-6">{school ? logoIn(LEFT_NAV) : title}</div>
       {school && appName ? <div className="px-6 pt-2 pb-2 text-sm font-semibold">{appName}</div> : null}
       {nav ? (
         <nav data-slot="app-frame-nav" className="flex flex-col gap-0.5 px-3 pb-3">
@@ -249,7 +335,7 @@ export function AppFrame({
           </Drawer.Portal>
         </Drawer.Root>
       ) : null}
-      <span className={cn("flex min-w-0 items-center", nav ? "" : "px-2")}>{logo}</span>
+      <span className={cn("flex min-w-0 items-center", nav ? "" : "px-2")}>{school ? logoIn(PHONE_BAR) : title}</span>
     </div>
   )
   const page = (
@@ -308,7 +394,7 @@ export function AppFrame({
       {canvas}
       {mobileBar}
       <header className="hidden h-14 shrink-0 items-center gap-4 px-4 md:flex">
-        {logo}
+        {school ? logoIn(TOP_EDGE) : title}
         {school && title ? (
           <>
             <span aria-hidden="true" className="h-5 w-px shrink-0 bg-current opacity-30" />
