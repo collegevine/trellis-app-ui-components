@@ -111,7 +111,10 @@ function Logo({ school, look }: { school: FrameSchool; look: FrameColors["logo"]
  * sits where the logo goes. An app with no school and no nav gets no frame.
  *
  * Only the page scrolls, and the frame stays in place. The bottom edge of the
- * frame comes into view when the user scrolls to the end of the page.
+ * frame comes into view when the user scrolls to the end of the page. Where the
+ * browser draws a scrollbar beside the page, the page's right corners are
+ * square, so that the page meets the scrollbar, and the scrollbar's top end
+ * takes the rounded corner.
  *
  * Below tablet width, the top nav and the left nav both give way to a menu
  * button in the top edge. The button opens the nav in a drawer from the left
@@ -158,10 +161,22 @@ export function AppFrame({
   const { pathname } = useLocation()
   const scroller = useRef<HTMLDivElement>(null)
   const [menuOpen, setMenuOpen] = useState(false)
+  const [hasScrollbar, setHasScrollbar] = useState(false)
   useEffect(() => {
     if (scroller.current) scroller.current.scrollTop = 0
     setMenuOpen(false)
   }, [pathname])
+  useEffect(() => {
+    const element = scroller.current
+    if (!element) return
+    const measure = () => setHasScrollbar(element.offsetWidth - element.clientWidth > 0)
+    measure()
+    if (typeof ResizeObserver === "undefined") return
+    const observer = new ResizeObserver(measure)
+    observer.observe(element)
+    if (element.firstElementChild) observer.observe(element.firstElementChild)
+    return () => observer.disconnect()
+  }, [layout])
 
   if (layout === "plain" || (!school && !nav)) {
     return (
@@ -231,20 +246,29 @@ export function AppFrame({
   )
   const page = (
     <main
-      ref={scroller}
-      data-slot="app-frame-scroll"
       className={cn(
-        "flex min-h-0 min-w-0 flex-1 flex-col overflow-y-auto rounded-t-xl",
+        "flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden rounded-t-xl",
         layout === "left" ? "mx-2 md:mt-2 md:ml-0" : "mx-2"
       )}
     >
       <div
-        data-slot="app-frame-page"
-        className={cn("shrink-0 grow rounded-xl bg-(--frame-page) text-foreground", className)}
+        ref={scroller}
+        data-slot="app-frame-scroll"
+        data-scrollbar={hasScrollbar ? "" : undefined}
+        className="flex min-h-0 flex-1 flex-col overflow-y-auto"
       >
-        {children}
+        <div
+          data-slot="app-frame-page"
+          className={cn(
+            "shrink-0 grow rounded-xl bg-(--frame-page) text-foreground",
+            hasScrollbar && "rounded-r-none",
+            className
+          )}
+        >
+          {children}
+        </div>
+        <div aria-hidden="true" className="h-2 shrink-0" />
       </div>
-      <div aria-hidden="true" className="h-2 shrink-0" />
     </main>
   )
 
