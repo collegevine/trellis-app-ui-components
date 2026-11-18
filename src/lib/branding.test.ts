@@ -33,13 +33,16 @@ describe("selectedFill", () => {
     expect(selectedFill({ main: "#003da5" })).toEqual({ fill: "#003da5", text: "#ffffff" })
   })
 
-  it("picks dark text on a light main color", () => {
-    expect(selectedFill({ main: "#ffcd00" })?.text).toBe("#111111")
+  it("picks dark text on a light main color that still passes", () => {
+    expect(selectedFill({ main: "#ed2b74" })).toEqual({ fill: "#ed2b74", text: "#111111" })
   })
 
-  it.each(["#ffffff", "#fdfdfd"])("keeps the neutral look with a white main color (%s)", (main) => {
-    expect(selectedFill({ main })).toBeNull()
-  })
+  it.each(["#ffffff", "#ffcd00", "#00b140", "#ff671d"])(
+    "keeps the neutral look when the main color has less than 3:1 contrast with the page (%s)",
+    (main) => {
+      expect(selectedFill({ main })).toBeNull()
+    }
+  )
 })
 
 describe("schoolTheme", () => {

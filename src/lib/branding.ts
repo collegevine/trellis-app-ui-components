@@ -1,4 +1,4 @@
-import { contrastRatio, normalizeHex, toOklch } from "./color.js"
+import { contrastRatio, normalizeHex } from "./color.js"
 
 /** A school's brand colors, as hex values. */
 export interface SchoolColors {
@@ -8,12 +8,8 @@ export interface SchoolColors {
 
 const DARK_TEXT = "#111111"
 const LIGHT_TEXT = "#ffffff"
-
-const NEUTRAL_CHROMA = 0.04
-
-function isNeutral(color: string): boolean {
-  return toOklch(color).c < NEUTRAL_CHROMA
-}
+const PAGE = "#ffffff"
+const SELECTED_CONTRAST = 3
 
 /**
  * Black or white text for a fill, whichever has more contrast with it. On
@@ -23,11 +19,6 @@ export function readableText(fill: string): string {
   return contrastRatio(fill, LIGHT_TEXT) >= contrastRatio(fill, DARK_TEXT)
     ? LIGHT_TEXT
     : DARK_TEXT
-}
-
-function isNearWhite(color: string): boolean {
-  const { l } = toOklch(color)
-  return isNeutral(color) && l > 0.95
 }
 
 /** A fill and the text that goes on it. */
@@ -41,12 +32,14 @@ export interface Fill {
  * button, a switch that is on, the selected option in a segmented control,
  * the current page number in a table, the selected day in a date picker.
  *
- * The fill is the main school color. When the main color is white or close
- * to white, the result is `null` and selected controls keep the neutral look.
+ * The fill is the main school color. A selected control must stand out from
+ * the white page, so when the main color has less than 3:1 contrast with
+ * white, the result is `null` and selected controls keep the neutral look.
+ * Yellow, bright green and bright orange main colors fall in that range.
  */
 export function selectedFill(colors: SchoolColors): Fill | null {
   const main = normalizeHex(colors.main)
-  if (isNearWhite(main)) return null
+  if (contrastRatio(main, PAGE) < SELECTED_CONTRAST) return null
   return { fill: main, text: readableText(main) }
 }
 
