@@ -85,8 +85,9 @@ export interface Fill {
 /**
  * The fill for selected controls: a checked checkbox or radio button, a switch
  * that is on, the filled part of a slider, the current page number in a table,
- * the selected day in a date picker. Tabs, segmented controls and filters keep
- * the neutral look.
+ * the selected day in a date picker. A selected tab takes a line in this
+ * color instead of a fill. Segmented controls and filters keep the neutral
+ * look.
  *
  * The fill is the main school color. A selected control must stand out from
  * the white page, so when the main color has less than 3:1 contrast with
