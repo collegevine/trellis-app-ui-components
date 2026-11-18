@@ -25,8 +25,6 @@ export const BRANDING_STEPS: readonly BrandingStep[] = [
 export interface SchoolColors {
   /** The main school color, such as `#003da5`. */
   main: string
-  /** The second school color, if the school has one. */
-  second?: string
 }
 
 const DARK_TEXT = "#111111"
@@ -74,11 +72,6 @@ export function readableText(fill: string): string {
     : DARK_TEXT
 }
 
-function isNearBlack(color: string): boolean {
-  const { l } = toOklch(color)
-  return isNeutral(color) && l < 0.4
-}
-
 function isNearWhite(color: string): boolean {
   const { l } = toOklch(color)
   return isNeutral(color) && l > 0.95
@@ -96,17 +89,13 @@ export interface Fill {
  * the selected day in a date picker. Tabs, segmented controls and filters keep
  * the neutral look.
  *
- * The fill is the second school color. When the second color is black or a
- * dark gray, it looks like a button, so the main school color fills instead.
- * With no second color, or a white one, the result is `null` and selected
- * controls keep the neutral look.
+ * The fill is the main school color. When the main color is white or close
+ * to white, the result is `null` and selected controls keep the neutral look.
  */
 export function selectedFill(colors: SchoolColors): Fill | null {
   const main = normalizeHex(colors.main)
-  const second = colors.second === undefined ? undefined : normalizeHex(colors.second)
-  if (second === undefined || isNearWhite(second)) return null
-  const fill = isNearBlack(second) ? main : second
-  return { fill, text: readableText(fill) }
+  if (isNearWhite(main)) return null
+  return { fill: main, text: readableText(main) }
 }
 
 const HUELESS_NEUTRALS = {
@@ -140,7 +129,7 @@ const HUELESS_NEUTRALS = {
  * @example
  * ```tsx
  * // app/root.tsx
- * <html lang="en" style={schoolTheme({ main: "#003da5", second: "#e4002b" })}>
+ * <html lang="en" style={schoolTheme({ main: "#003da5" })}>
  * ```
  */
 export function schoolTheme(colors: SchoolColors): Record<string, string> {

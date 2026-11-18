@@ -29,7 +29,7 @@ describe("defaultBrandingStep", () => {
 describe("color values in the output", () => {
   it("writes every school color as a six-digit hex value that CSS accepts", () => {
     expect(frameColors("F00", "full-color-frame").frame).toBe("#ff0000")
-    expect(schoolTheme({ main: "F00", second: "0a0" })["--school-selected"]).toBe("#00aa00")
+    expect(schoolTheme({ main: "F00" })["--school-selected"]).toBe("#ff0000")
     expect(schoolTheme({ main: "F00" })["--school-main"]).toBe("#ff0000")
   })
 })
@@ -55,47 +55,30 @@ describe("readableText", () => {
 })
 
 describe("selectedFill", () => {
-  it("fills selected controls with the second school color", () => {
-    expect(selectedFill({ main: "#003da5", second: "#e4002b" })).toEqual({
-      fill: "#e4002b",
-      text: "#ffffff",
-    })
+  it("fills selected controls with the main school color", () => {
+    expect(selectedFill({ main: "#003da5" })).toEqual({ fill: "#003da5", text: "#ffffff" })
   })
 
-  it("picks dark text on a light second color", () => {
-    expect(selectedFill({ main: "#1e1656", second: "#ffcd00" })?.text).toBe("#111111")
+  it("picks dark text on a light main color", () => {
+    expect(selectedFill({ main: "#ffcd00" })?.text).toBe("#111111")
   })
 
-  it.each(["#000000", "#0f0f0f", "#2d2926", "#333f48"])(
-    "uses the main color when the second color is black or a dark gray (%s)",
-    (second) => {
-      expect(selectedFill({ main: "#ff671d", second })?.fill).toBe("#ff671d")
-    }
-  )
-
-  it("keeps a dark navy second color, which does not look like a button", () => {
-    expect(selectedFill({ main: "#ffcd00", second: "#0c2340" })?.fill).toBe("#0c2340")
+  it.each(["#ffffff", "#fdfdfd"])("keeps the neutral look with a white main color (%s)", (main) => {
+    expect(selectedFill({ main })).toBeNull()
   })
-
-  it.each([undefined, "#ffffff", "#fdfdfd"])(
-    "keeps the neutral look with no second color or a white one (%s)",
-    (second) => {
-      expect(selectedFill({ main: "#003da5", second })).toBeNull()
-    }
-  )
 })
 
 describe("schoolTheme", () => {
   it("sets the main color, its text and the selected fill", () => {
-    const theme = schoolTheme({ main: "#003da5", second: "#e4002b" })
+    const theme = schoolTheme({ main: "#003da5" })
     expect(theme["--school-main"]).toBe("#003da5")
     expect(theme["--school-main-foreground"]).toBe("#ffffff")
-    expect(theme["--school-selected"]).toBe("#e4002b")
+    expect(theme["--school-selected"]).toBe("#003da5")
     expect(theme["--school-selected-foreground"]).toBe("#ffffff")
   })
 
   it("leaves out the selected fill when selected controls stay neutral", () => {
-    const theme = schoolTheme({ main: "#003da5" })
+    const theme = schoolTheme({ main: "#ffffff" })
     expect(theme).not.toHaveProperty("--school-selected")
     expect(theme).not.toHaveProperty("--school-selected-foreground")
   })
@@ -109,7 +92,7 @@ describe("schoolTheme", () => {
   })
 
   it("leaves buttons, the error red, the focus outline and the radius alone", () => {
-    const theme = schoolTheme({ main: "#c41230", second: "#000000" })
+    const theme = schoolTheme({ main: "#c41230" })
     for (const name of ["--primary", "--primary-foreground", "--destructive", "--ring", "--radius"]) {
       expect(theme).not.toHaveProperty(name)
     }
