@@ -29,8 +29,8 @@ describe("defaultBrandingStep", () => {
 describe("color values in the output", () => {
   it("writes every school color as a six-digit hex value that CSS accepts", () => {
     expect(frameColors("F00", "full-color-frame").frame).toBe("#ff0000")
-    expect(schoolTheme({ main: "F00" })["--school-selected"]).toBe("#ff0000")
-    expect(schoolTheme({ main: "F00" })["--school-main"]).toBe("#ff0000")
+    expect(schoolTheme({ main: "F00" }, "tinted-frame")["--school-selected"]).toBe("#ff0000")
+    expect(schoolTheme({ main: "F00" }, "tinted-frame")["--school-main"]).toBe("#ff0000")
   })
 })
 
@@ -70,21 +70,32 @@ describe("selectedFill", () => {
 
 describe("schoolTheme", () => {
   it("sets the main color, its text and the selected fill", () => {
-    const theme = schoolTheme({ main: "#003da5" })
+    const theme = schoolTheme({ main: "#003da5" }, "tinted-frame")
     expect(theme["--school-main"]).toBe("#003da5")
     expect(theme["--school-main-foreground"]).toBe("#ffffff")
     expect(theme["--school-selected"]).toBe("#003da5")
     expect(theme["--school-selected-foreground"]).toBe("#ffffff")
   })
 
+  it("leaves out the selected fill at the neutral-frame step", () => {
+    const theme = schoolTheme({ main: "#003da5" }, "neutral-frame")
+    expect(theme).not.toHaveProperty("--school-selected")
+    expect(theme).not.toHaveProperty("--school-selected-foreground")
+    expect(theme["--school-main"]).toBe("#003da5")
+  })
+
+  it("sets the selected fill at the full-color-frame step", () => {
+    expect(schoolTheme({ main: "#003da5" }, "full-color-frame")["--school-selected"]).toBe("#003da5")
+  })
+
   it("leaves out the selected fill when selected controls stay neutral", () => {
-    const theme = schoolTheme({ main: "#ffffff" })
+    const theme = schoolTheme({ main: "#ffffff" }, "tinted-frame")
     expect(theme).not.toHaveProperty("--school-selected")
     expect(theme).not.toHaveProperty("--school-selected-foreground")
   })
 
   it("replaces the warm neutrals with neutrals that have no hue", () => {
-    const theme = schoolTheme({ main: "#003da5" })
+    const theme = schoolTheme({ main: "#003da5" }, "tinted-frame")
     for (const name of ["--background", "--muted", "--secondary", "--border", "--input"]) {
       const value = theme[name]
       expect(value, name).toMatch(/^#([0-9a-f]{2})\1\1$/)
@@ -92,7 +103,7 @@ describe("schoolTheme", () => {
   })
 
   it("leaves buttons, the error red, the focus outline and the radius alone", () => {
-    const theme = schoolTheme({ main: "#c41230" })
+    const theme = schoolTheme({ main: "#c41230" }, "tinted-frame")
     for (const name of ["--primary", "--primary-foreground", "--destructive", "--ring", "--radius"]) {
       expect(theme).not.toHaveProperty(name)
     }
