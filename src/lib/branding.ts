@@ -171,6 +171,8 @@ export interface FrameColors {
 
 const PAGE = "#ffffff"
 
+const NEUTRAL_PAGE = HUELESS_NEUTRALS["--background"]
+
 const LIGHT_GRAY_FRAME = HUELESS_NEUTRALS["--background"]
 
 const HUE_FRAME_LIGHTNESS = 0.9625
@@ -251,6 +253,7 @@ export function frameColors(color: string, step: BrandingStep): FrameColors {
 
 export function plainPageColor(color: string, step: BrandingStep): string {
   if (step === "neutral-frame") return PAGE
+  if (step === "tinted-frame") return NEUTRAL_PAGE
   const hue = schoolHue(normalizeHex(color))
   const lightness = isYellowHue(hue) ? YELLOW_PLAIN_PAGE_TINT_LIGHTNESS : PLAIN_PAGE_TINT_LIGHTNESS
   return fromOklch({ l: lightness, c: PLAIN_PAGE_TINT_STRENGTH, h: hue })

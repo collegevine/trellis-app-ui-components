@@ -124,14 +124,17 @@ describe("AppFrame", () => {
     expect(html).toContain("bg-(--frame-page)")
   })
 
-  it.each(["tinted-frame", "full-color-frame"] as const)(
-    "tints the form page in the school hue in the plain layout at the %s step",
-    (step) => {
-      const html = render(<AppFrame school={depaul} step={step} layout="plain" />)
-      expect(html).toContain(`--frame-page:${plainPageColor(depaul.main, step)}`)
-      expect(html).not.toContain("--frame-page:#ffffff")
-    },
-  )
+  it("puts the form on a light gray page in the plain layout at the tinted-frame step", () => {
+    const html = render(<AppFrame school={depaul} step="tinted-frame" layout="plain" />)
+    expect(html).toContain("--frame-page:#fafafa")
+  })
+
+  it("tints the form page in the school hue in the plain layout at the full-color-frame step", () => {
+    const html = render(<AppFrame school={depaul} step="full-color-frame" layout="plain" />)
+    expect(html).toContain(`--frame-page:${plainPageColor(depaul.main, "full-color-frame")}`)
+    expect(html).not.toContain("--frame-page:#ffffff")
+    expect(html).not.toContain("--frame-page:#fafafa")
+  })
 })
 
 describe("AppFrameNavLink", () => {
