@@ -87,6 +87,23 @@ describe("schoolTheme", () => {
     expect(theme["--school-main"]).toBe("#003da5")
   })
 
+  it("sets the school chart colors at the tinted and full-color steps, and leaves them out at the neutral step", () => {
+    const colors = { main: "#c41230", second: "#0b5394" }
+    expect(schoolTheme(colors, "tinted-frame")).toMatchObject({ "--chart-1": "#c41230", "--chart-2": "#0b5394" })
+    expect(schoolTheme(colors, "full-color-frame")).toMatchObject({ "--chart-1": "#c41230", "--chart-2": "#0b5394" })
+    expect(schoolTheme(colors, "neutral-frame")).not.toHaveProperty("--chart-1")
+    expect(schoolTheme(colors, "neutral-frame")).not.toHaveProperty("--chart-2")
+  })
+
+  it("fills all five chart colors when a school color passes", () => {
+    const theme = schoolTheme({ main: "#c41230" }, "tinted-frame")
+    for (const index of [1, 2, 3, 4, 5]) expect(theme).toHaveProperty(`--chart-${index}`)
+  })
+
+  it("leaves the chart colors to the theme when no school color passes", () => {
+    expect(schoolTheme({ main: "#333333" }, "tinted-frame")).not.toHaveProperty("--chart-1")
+  })
+
   it("sets the selected fill at the full-color-frame step", () => {
     expect(schoolTheme({ main: "#003da5" }, "full-color-frame")["--school-selected"]).toBe("#003da5")
   })

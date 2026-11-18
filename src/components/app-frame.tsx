@@ -48,8 +48,9 @@ export interface FrameSchool {
  * - `plain`: no frame. The logo sits above the page. With a school brand, the
  *   page is white at the `neutral-frame` step, a light gray at the
  *   `tinted-frame` step, and a very light tint in the hue of the main school
- *   color at the `full-color-frame` step. Use it for a page that
- *   people outside the school staff fill out, such as a form for students.
+ *   color at the `full-color-frame` step. Use the plain layout only on a
+ *   page where a user fills out a form and sees nothing else of the app. A
+ *   page that the people who manage the form also use keeps the frame.
  */
 export type AppFrameLayout = "top" | "left" | "plain"
 
