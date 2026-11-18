@@ -121,29 +121,27 @@ describe("plainPageColor", () => {
     expect(plainPageColor("#c41230", "neutral-frame")).toBe("#ffffff")
   })
 
-  it.each(["tinted-frame", "full-color-frame"] as const)(
-    "tints a page with no frame very lightly in the school hue at the %s step",
-    (step) => {
-      const page = toOklch(plainPageColor("#c41230", step))
-      expect(page.l).toBeCloseTo(0.98, 2)
-      expect(page.c).toBeGreaterThan(0.005)
-      expect(page.c).toBeLessThan(0.02)
-      expect(Math.abs(page.h - toOklch("#c41230").h)).toBeLessThan(5)
-    },
-  )
+  it("gives a page with no frame a light gray with no school color at the tinted-frame step", () => {
+    expect(plainPageColor("#c41230", "tinted-frame")).toBe("#fafafa")
+    expect(plainPageColor("#003da5", "tinted-frame")).toBe("#fafafa")
+  })
+
+  it("tints a page with no frame very lightly in the school hue at the full-color-frame step", () => {
+    const page = toOklch(plainPageColor("#c41230", "full-color-frame"))
+    expect(page.l).toBeCloseTo(0.98, 2)
+    expect(page.c).toBeGreaterThan(0.005)
+    expect(page.c).toBeLessThan(0.02)
+    expect(Math.abs(page.h - toOklch("#c41230").h)).toBeLessThan(5)
+  })
 
   it("tints a page with no frame more lightly for a yellow school color", () => {
-    const yellow = toOklch(plainPageColor("#c4d600", "tinted-frame"))
-    const red = toOklch(plainPageColor("#c41230", "tinted-frame"))
+    const yellow = toOklch(plainPageColor("#c4d600", "full-color-frame"))
+    const red = toOklch(plainPageColor("#c41230", "full-color-frame"))
     expect(yellow.l).toBeGreaterThan(red.l + 0.005)
   })
 
-  it("tints the page the same at the tinted and full-color steps", () => {
-    expect(plainPageColor("#c41230", "tinted-frame")).toBe(plainPageColor("#c41230", "full-color-frame"))
-  })
-
   it("gives a main color close to gray a warm tint", () => {
-    expect(Math.abs(toOklch(plainPageColor("#333333", "tinted-frame")).h - 97)).toBeLessThan(5)
+    expect(Math.abs(toOklch(plainPageColor("#333333", "full-color-frame")).h - 97)).toBeLessThan(5)
   })
 })
 

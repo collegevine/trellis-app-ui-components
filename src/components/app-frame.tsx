@@ -46,8 +46,9 @@ export interface FrameSchool {
  * - `left`: the nav runs down the left side of the frame, under the logo and
  *   the app name.
  * - `plain`: no frame. The logo sits above the page. With a school brand, the
- *   page is white at the `neutral-frame` step, and a very light tint in the hue of
- *   the main school color at the other two steps. Use it for a page that
+ *   page is white at the `neutral-frame` step, a light gray at the
+ *   `tinted-frame` step, and a very light tint in the hue of the main school
+ *   color at the `full-color-frame` step. Use it for a page that
  *   people outside the school staff fill out, such as a form for students.
  */
 export type AppFrameLayout = "top" | "left" | "plain"
