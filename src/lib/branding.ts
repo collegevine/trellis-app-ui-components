@@ -4,15 +4,16 @@ import { contrastRatio, fromOklch, normalizeHex, toOklch } from "./color.js"
  * A step on the branding scale, from least to most school color.
  *
  * - `neutral-frame`: a very light gray frame around a white page. The school color
- *   appears in the logo and in charts. Selected controls keep the neutral look.
+ *   appears in the logo. Selected controls and charts keep the neutral look.
  * - `tinted-frame`: a light frame in the hue of the main school color, around
  *   a white page. Every school gets the same lightness and the same small
  *   amount of color, and a main color close to gray, black or white gets a
  *   warm neutral. Selected controls take the main school color when it
- *   stands out from the page (see {@link selectedFill}).
+ *   stands out from the page (see {@link selectedFill}), and so does the
+ *   first chart color (see {@link chartColor}).
  * - `full-color-frame`: the main school color as the frame, around a white
- *   page. The logo shows in white. Selected controls take the main school
- *   color when it stands out from the page.
+ *   page. The logo shows in white. Selected controls and the first chart
+ *   color take the main school color when it stands out from the page.
  */
 export type BrandingStep = "neutral-frame" | "tinted-frame" | "full-color-frame"
 
@@ -33,6 +34,7 @@ const DARK_TEXT = "#111111"
 const LIGHT_TEXT = "#ffffff"
 const PAGE = "#ffffff"
 const SELECTED_CONTRAST = 3
+const CHART_CONTRAST = 1.5
 
 const NEUTRAL_CHROMA = 0.04
 
@@ -99,6 +101,18 @@ export function selectedFill(colors: SchoolColors): Fill | null {
   return { fill: main, text: readableText(main) }
 }
 
+/**
+ * The first chart color: the main school color. A chart mark needs at least
+ * 1.5:1 contrast with the white chart background and enough hue that it does
+ * not look gray. A main color that fails either check returns `null`, and the
+ * chart keeps the theme's first color.
+ */
+export function chartColor(colors: SchoolColors): string | null {
+  const main = normalizeHex(colors.main)
+  if (isNeutral(main) || contrastRatio(main, PAGE) < CHART_CONTRAST) return null
+  return main
+}
+
 const HUELESS_NEUTRALS = {
   "--background": "#fafafa",
   "--muted": "#f5f5f5",
@@ -124,6 +138,9 @@ const HUELESS_NEUTRALS = {
  *   selected controls and its text (see {@link selectedFill}). They are left
  *   out at the `neutral-frame` step, and when the main color is too light for
  *   the page, so selected controls keep the neutral look.
+ * - `--chart-1`: the first chart color (see {@link chartColor}). It is left out
+ *   at the `neutral-frame` step, and when the main color fails the chart
+ *   checks, so the chart keeps the theme's first color.
  *
  * Buttons, the error red, the focus outline and the corner radius stay
  * CollegeVine, so the values do not touch them.
@@ -136,6 +153,7 @@ const HUELESS_NEUTRALS = {
  */
 export function schoolTheme(colors: SchoolColors, step: BrandingStep): Record<string, string> {
   const selected = step === "neutral-frame" ? null : selectedFill(colors)
+  const chart = step === "neutral-frame" ? null : chartColor(colors)
   return {
     ...HUELESS_NEUTRALS,
     "--school-main": normalizeHex(colors.main),
@@ -146,6 +164,7 @@ export function schoolTheme(colors: SchoolColors, step: BrandingStep): Record<st
           "--school-selected-foreground": selected.text,
         }
       : {}),
+    ...(chart ? { "--chart-1": chart } : {}),
   }
 }
 

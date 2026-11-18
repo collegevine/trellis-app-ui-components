@@ -7,6 +7,7 @@ import {
   frameColors,
   plainPageColor,
   readableText,
+  chartColor,
   schoolTheme,
   selectedFill,
 } from "./branding.js"
@@ -71,6 +72,23 @@ describe("selectedFill", () => {
   )
 })
 
+describe("chartColor", () => {
+  it("uses the main school color", () => {
+    expect(chartColor({ main: "#c41230" })).toBe("#c41230")
+  })
+
+  it("uses a yellow that just reaches 1.5:1 with the page", () => {
+    expect(chartColor({ main: "#ffcd00" })).toBe("#ffcd00")
+  })
+
+  it.each(["#333333", "#000000", "#fff8dc"])(
+    "keeps the theme's chart color for a gray, black or very light main color (%s)",
+    (main) => {
+      expect(chartColor({ main })).toBeNull()
+    }
+  )
+})
+
 describe("schoolTheme", () => {
   it("sets the main color, its text and the selected fill", () => {
     const theme = schoolTheme({ main: "#003da5" }, "tinted-frame")
@@ -85,6 +103,12 @@ describe("schoolTheme", () => {
     expect(theme).not.toHaveProperty("--school-selected")
     expect(theme).not.toHaveProperty("--school-selected-foreground")
     expect(theme["--school-main"]).toBe("#003da5")
+  })
+
+  it("sets the first chart color at the tinted and full-color steps, and leaves it out at the neutral step", () => {
+    expect(schoolTheme({ main: "#c41230" }, "tinted-frame")["--chart-1"]).toBe("#c41230")
+    expect(schoolTheme({ main: "#c41230" }, "full-color-frame")["--chart-1"]).toBe("#c41230")
+    expect(schoolTheme({ main: "#c41230" }, "neutral-frame")).not.toHaveProperty("--chart-1")
   })
 
   it("sets the selected fill at the full-color-frame step", () => {
