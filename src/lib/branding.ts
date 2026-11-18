@@ -91,9 +91,10 @@ export interface Fill {
 }
 
 /**
- * The fill for selected controls: a selected tab, a checked checkbox or radio
- * button, a switch that is on, the selected option in a segmented control,
- * the current page number in a table, the selected day in a date picker.
+ * The fill for selected controls: a checked checkbox or radio button, a switch
+ * that is on, the filled part of a slider, the current page number in a table,
+ * the selected day in a date picker. Tabs, segmented controls and filters keep
+ * the neutral look.
  *
  * The fill is the second school color. When the second color is black or a
  * dark gray, it looks like a button, so the main school color fills instead.
