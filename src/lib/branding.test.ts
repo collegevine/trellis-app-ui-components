@@ -7,7 +7,7 @@ import {
   frameColors,
   plainPageColor,
   readableText,
-  chartColor,
+  chartColors,
   schoolTheme,
   selectedFill,
 } from "./branding.js"
@@ -72,21 +72,22 @@ describe("selectedFill", () => {
   )
 })
 
-describe("chartColor", () => {
-  it("uses the main school color", () => {
-    expect(chartColor({ main: "#c41230" })).toBe("#c41230")
+describe("chartColors", () => {
+  it("lists the main color, then the second color", () => {
+    expect(chartColors({ main: "#c41230", second: "#0b5394" })).toEqual(["#c41230", "#0b5394"])
   })
 
   it("uses a yellow that just reaches 1.5:1 with the page", () => {
-    expect(chartColor({ main: "#ffcd00" })).toBe("#ffcd00")
+    expect(chartColors({ main: "#ffcd00" })).toEqual(["#ffcd00"])
   })
 
-  it.each(["#333333", "#000000", "#fff8dc"])(
-    "keeps the theme's chart color for a gray, black or very light main color (%s)",
-    (main) => {
-      expect(chartColor({ main })).toBeNull()
-    }
-  )
+  it("moves the second color first when the main color fails the chart checks", () => {
+    expect(chartColors({ main: "#333333", second: "#0b5394" })).toEqual(["#0b5394"])
+  })
+
+  it.each(["#000000", "#fff8dc"])("leaves out a black or very light second color (%s)", (second) => {
+    expect(chartColors({ main: "#c41230", second })).toEqual(["#c41230"])
+  })
 })
 
 describe("schoolTheme", () => {
@@ -105,10 +106,16 @@ describe("schoolTheme", () => {
     expect(theme["--school-main"]).toBe("#003da5")
   })
 
-  it("sets the first chart color at the tinted and full-color steps, and leaves it out at the neutral step", () => {
-    expect(schoolTheme({ main: "#c41230" }, "tinted-frame")["--chart-1"]).toBe("#c41230")
-    expect(schoolTheme({ main: "#c41230" }, "full-color-frame")["--chart-1"]).toBe("#c41230")
-    expect(schoolTheme({ main: "#c41230" }, "neutral-frame")).not.toHaveProperty("--chart-1")
+  it("sets the school chart colors at the tinted and full-color steps, and leaves them out at the neutral step", () => {
+    const colors = { main: "#c41230", second: "#0b5394" }
+    expect(schoolTheme(colors, "tinted-frame")).toMatchObject({ "--chart-1": "#c41230", "--chart-2": "#0b5394" })
+    expect(schoolTheme(colors, "full-color-frame")).toMatchObject({ "--chart-1": "#c41230", "--chart-2": "#0b5394" })
+    expect(schoolTheme(colors, "neutral-frame")).not.toHaveProperty("--chart-1")
+    expect(schoolTheme(colors, "neutral-frame")).not.toHaveProperty("--chart-2")
+  })
+
+  it("leaves the second chart color to the theme when the school has no second color", () => {
+    expect(schoolTheme({ main: "#c41230" }, "tinted-frame")).not.toHaveProperty("--chart-2")
   })
 
   it("sets the selected fill at the full-color-frame step", () => {
