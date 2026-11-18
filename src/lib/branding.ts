@@ -9,11 +9,12 @@ import { contrastRatio, fromOklch, normalizeHex, toOklch } from "./color.js"
  *   a white page. Every school gets the same lightness and the same small
  *   amount of color, and a main color close to gray, black or white gets a
  *   warm neutral. Selected controls take the main school color when it
- *   stands out from the page (see {@link selectedFill}), and so does the
- *   first chart color (see {@link chartColor}).
+ *   stands out from the page (see {@link selectedFill}). Charts open with the
+ *   school colors (see {@link chartColors}).
  * - `full-color-frame`: the main school color as the frame, around a white
- *   page. The logo shows in white. Selected controls and the first chart
- *   color take the main school color when it stands out from the page.
+ *   page. The logo shows in white. Selected controls take the main school
+ *   color when it stands out from the page, and charts open with the school
+ *   colors.
  */
 export type BrandingStep = "neutral-frame" | "tinted-frame" | "full-color-frame"
 
@@ -28,6 +29,8 @@ export const BRANDING_STEPS: readonly BrandingStep[] = [
 export interface SchoolColors {
   /** The main school color, such as `#003da5`. */
   main: string
+  /** The second school color, if the school has one. Only charts use it. */
+  second?: string
 }
 
 const DARK_TEXT = "#111111"
@@ -102,15 +105,16 @@ export function selectedFill(colors: SchoolColors): Fill | null {
 }
 
 /**
- * The first chart color: the main school color. A chart mark needs at least
- * 1.5:1 contrast with the white chart background and enough hue that it does
- * not look gray. A main color that fails either check returns `null`, and the
- * chart keeps the theme's first color.
+ * The school colors for charts: the main color, then the second color, each
+ * only when it passes the chart checks. A chart mark needs at least 1.5:1
+ * contrast with the white chart background and enough hue that it does not
+ * look gray. The first color in the list is the first chart color.
  */
-export function chartColor(colors: SchoolColors): string | null {
-  const main = normalizeHex(colors.main)
-  if (isNeutral(main) || contrastRatio(main, PAGE) < CHART_CONTRAST) return null
-  return main
+export function chartColors(colors: SchoolColors): string[] {
+  const candidates = [colors.main, colors.second].filter((color): color is string => color !== undefined)
+  return candidates
+    .map(normalizeHex)
+    .filter((color) => !isNeutral(color) && contrastRatio(color, PAGE) >= CHART_CONTRAST)
 }
 
 const HUELESS_NEUTRALS = {
@@ -138,9 +142,10 @@ const HUELESS_NEUTRALS = {
  *   selected controls and its text (see {@link selectedFill}). They are left
  *   out at the `neutral-frame` step, and when the main color is too light for
  *   the page, so selected controls keep the neutral look.
- * - `--chart-1`: the first chart color (see {@link chartColor}). It is left out
- *   at the `neutral-frame` step, and when the main color fails the chart
- *   checks, so the chart keeps the theme's first color.
+ * - `--chart-1` and `--chart-2`: the school colors that pass the chart checks,
+ *   in order (see {@link chartColors}). They are left out at the
+ *   `neutral-frame` step, and a chart color with no school color that passes
+ *   keeps the theme's value.
  *
  * Buttons, the error red, the focus outline and the corner radius stay
  * CollegeVine, so the values do not touch them.
@@ -153,7 +158,7 @@ const HUELESS_NEUTRALS = {
  */
 export function schoolTheme(colors: SchoolColors, step: BrandingStep): Record<string, string> {
   const selected = step === "neutral-frame" ? null : selectedFill(colors)
-  const chart = step === "neutral-frame" ? null : chartColor(colors)
+  const charts = step === "neutral-frame" ? [] : chartColors(colors)
   return {
     ...HUELESS_NEUTRALS,
     "--school-main": normalizeHex(colors.main),
@@ -164,7 +169,7 @@ export function schoolTheme(colors: SchoolColors, step: BrandingStep): Record<st
           "--school-selected-foreground": selected.text,
         }
       : {}),
-    ...(chart ? { "--chart-1": chart } : {}),
+    ...Object.fromEntries(charts.map((color, index) => [`--chart-${index + 1}`, color])),
   }
 }
 

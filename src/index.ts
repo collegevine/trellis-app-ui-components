@@ -37,7 +37,7 @@ export {
 } from "./components/app-frame.js"
 export {
   BRANDING_STEPS,
-  chartColor,
+  chartColors,
   defaultBrandingStep,
   frameColors,
   readableText,
