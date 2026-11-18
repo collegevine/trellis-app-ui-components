@@ -25,3 +25,13 @@ export {
   type TextAreaProps,
   type TextFieldProps,
 } from "./components/text-field.js"
+export {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+  type TabsContentProps,
+  type TabsListProps,
+  type TabsProps,
+  type TabsTriggerProps,
+} from "./components/tabs.js"
