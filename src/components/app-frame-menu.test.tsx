@@ -26,7 +26,7 @@ function renderApp(layout: AppFrameLayout, withNav = true) {
       element: (
         <AppFrame
           school={{ name: "Northfield University", main: "#003da5", logo: { src: "/logo.svg" } }}
-          step="tinted-frame"
+          step="medium"
           layout={layout}
           appName="Admissions dashboard"
           nav={
