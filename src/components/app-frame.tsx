@@ -50,9 +50,11 @@ export interface FrameSchool {
  * - `left`: the nav runs down the left side of the frame, under the logo and
  *   the app name.
  * - `plain`: no frame. The logo sits above the page. With a school brand, the
- *   page is white at the `neutral-frame` step, and a very light tint in the hue of
- *   the main school color at the other two steps. Use it for a page that
- *   people outside the school staff fill out, such as a form for students.
+ *   page is white at the `low` level, a light gray at the
+ *   `medium` level, and a very light tint in the hue of the main school
+ *   color at the `high` level. Use the plain layout only on a
+ *   page where a user fills out a form and sees nothing else of the app. A
+ *   page that the people who manage the form also use keeps the frame.
  */
 export type AppFrameLayout = "top" | "left" | "plain"
 
@@ -61,7 +63,7 @@ export type AppFrameBrand =
   | {
       /** The school whose brand the frame shows. */
       school: FrameSchool
-      /** The step on the branding scale. */
+      /** The level on the branding scale. */
       step: BrandingStep
     }
   | {
@@ -203,14 +205,14 @@ function Logo({
  * button in the top edge. The button opens the nav in a drawer from the left
  * side, and the drawer closes when a nav item opens another page.
  *
- * The `step` sets how much school color the frame shows. Call
- * `defaultBrandingStep` with who the app is for to get the step of a school's
- * first app.
+ * The `step` is the level on the branding scale, which sets how much school
+ * color the frame shows. Call `defaultBrandingStep` with who the app is for to
+ * get the level of a school's first app.
  *
- * - `neutral-frame`: a very light gray frame around a white page.
- * - `tinted-frame`: a light frame in the hue of the main school color, around
+ * - `low`: a very light gray frame around a white page.
+ * - `medium`: a light frame in the hue of the main school color, around
  *   a white page.
- * - `full-color-frame`: the main school color around a white page, with
+ * - `high`: the main school color around a white page, with
  *   the logo in white.
  *
  * The selected nav item takes its fill from the frame, so it shows on every

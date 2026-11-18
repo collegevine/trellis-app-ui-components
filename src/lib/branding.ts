@@ -1,36 +1,43 @@
+import { chartColors } from "./chart-colors.js"
 import { contrastRatio, fromOklch, normalizeHex, toOklch } from "./color.js"
 
 /**
- * A step on the branding scale, from least to most school color.
+ * A level on the branding scale, from least to most school color.
  *
- * - `neutral-frame`: a very light gray frame around a white page. The school color
- *   appears in the logo, in charts and in selected controls.
- * - `tinted-frame`: a light frame in the hue of the main school color, around
+ * - `low`: a very light gray frame around a white page. The school color
+ *   appears in the logo. Selected controls and charts keep the neutral look.
+ * - `medium`: a light frame in the hue of the main school color, around
  *   a white page. Every school gets the same lightness and the same small
  *   amount of color, and a main color close to gray, black or white gets a
- *   warm neutral.
- * - `full-color-frame`: the main school color as the frame, around a white
- *   page. The logo shows in white.
+ *   warm neutral. Selected controls take the main school color when it
+ *   stands out from the page (see {@link selectedFill}). Charts open with the
+ *   school colors (see `chartColors`).
+ * - `high`: the main school color as the frame, around a white
+ *   page. The logo shows in white. Selected controls take the main school
+ *   color when it stands out from the page, and charts open with the school
+ *   colors.
  */
-export type BrandingStep = "neutral-frame" | "tinted-frame" | "full-color-frame"
+export type BrandingStep = "low" | "medium" | "high"
 
-/** The steps of the branding scale, from least to most school color. */
+/** The levels of the branding scale, from least to most school color. */
 export const BRANDING_STEPS: readonly BrandingStep[] = [
-  "neutral-frame",
-  "tinted-frame",
-  "full-color-frame",
+  "low",
+  "medium",
+  "high",
 ]
 
 /** A school's brand colors, as hex values. */
 export interface SchoolColors {
   /** The main school color, such as `#003da5`. */
   main: string
-  /** The second school color, if the school has one. */
+  /** The second school color, if the school has one. Only charts use it. */
   second?: string
 }
 
 const DARK_TEXT = "#111111"
 const LIGHT_TEXT = "#ffffff"
+const PAGE = "#ffffff"
+const SELECTED_CONTRAST = 3
 
 const NEUTRAL_CHROMA = 0.04
 
@@ -48,19 +55,19 @@ function isNeutral(color: string): boolean {
 export type AppAudience = "students" | "staff"
 
 /**
- * The step on the branding scale for a school's first app, picked from who the
- * app is for. An app for students starts at `tinted-frame`, and an app for
- * staff starts at `neutral-frame`. It never returns `full-color-frame`.
+ * The level on the branding scale for a school's first app, picked from who the
+ * app is for. An app for students starts at `medium`, and an app for
+ * staff starts at `low`. It never returns `high`.
  *
  * @example
  * ```ts
- * defaultBrandingStep("students") // "tinted-frame"
- * defaultBrandingStep("staff") // "neutral-frame"
+ * defaultBrandingStep("students") // "medium"
+ * defaultBrandingStep("staff") // "low"
  * ```
  */
 export function defaultBrandingStep(audience: AppAudience): BrandingStep {
-  if (audience === "students") return "tinted-frame"
-  if (audience === "staff") return "neutral-frame"
+  if (audience === "students") return "medium"
+  if (audience === "staff") return "low"
   throw new Error(`Expected "students" or "staff", got "${String(audience)}"`)
 }
 
@@ -74,16 +81,6 @@ export function readableText(fill: string): string {
     : DARK_TEXT
 }
 
-function isNearBlack(color: string): boolean {
-  const { l } = toOklch(color)
-  return isNeutral(color) && l < 0.4
-}
-
-function isNearWhite(color: string): boolean {
-  const { l } = toOklch(color)
-  return isNeutral(color) && l > 0.95
-}
-
 /** A fill and the text that goes on it. */
 export interface Fill {
   fill: string
@@ -91,21 +88,20 @@ export interface Fill {
 }
 
 /**
- * The fill for selected controls: a selected tab, a checked checkbox or radio
- * button, a switch that is on, the selected option in a segmented control,
- * the current page number in a table, the selected day in a date picker.
+ * The fill for selected controls: a checked checkbox or radio button, a switch
+ * that is on, the filled part of a slider, the current page number in a table,
+ * the selected day in a date picker. Tabs, segmented controls and filters keep
+ * the neutral look.
  *
- * The fill is the second school color. When the second color is black or a
- * dark gray, it looks like a button, so the main school color fills instead.
- * With no second color, or a white one, the result is `null` and selected
- * controls keep the neutral look.
+ * The fill is the main school color. A selected control must stand out from
+ * the white page, so when the main color has less than 3:1 contrast with
+ * white, the result is `null` and selected controls keep the neutral look.
+ * Yellow, bright green and bright orange main colors fall in that range.
  */
 export function selectedFill(colors: SchoolColors): Fill | null {
   const main = normalizeHex(colors.main)
-  const second = colors.second === undefined ? undefined : normalizeHex(colors.second)
-  if (second === undefined || isNearWhite(second)) return null
-  const fill = isNearBlack(second) ? main : second
-  return { fill, text: readableText(fill) }
+  if (contrastRatio(main, PAGE) < SELECTED_CONTRAST) return null
+  return { fill: main, text: readableText(main) }
 }
 
 const HUELESS_NEUTRALS = {
@@ -131,7 +127,12 @@ const HUELESS_NEUTRALS = {
  *   the text that goes on it.
  * - `--school-selected` and `--school-selected-foreground`: the fill for
  *   selected controls and its text (see {@link selectedFill}). They are left
- *   out when selected controls keep the neutral look.
+ *   out at the `low` level, and when the main color is too light for
+ *   the page, so selected controls keep the neutral look.
+ * - `--chart-1` to `--chart-5`: the school's chart colors, the school colors
+ *   first and generated colors after them (see `chartColors`). They are left
+ *   out at the `low` level, and when no school color passes the chart
+ *   checks, so charts keep the theme's colors.
  *
  * Buttons, the error red, the focus outline and the corner radius stay
  * CollegeVine, so the values do not touch them.
@@ -139,11 +140,12 @@ const HUELESS_NEUTRALS = {
  * @example
  * ```tsx
  * // app/root.tsx
- * <html lang="en" style={schoolTheme({ main: "#003da5", second: "#e4002b" })}>
+ * <html lang="en" style={schoolTheme({ main: "#003da5" }, "medium")}>
  * ```
  */
-export function schoolTheme(colors: SchoolColors): Record<string, string> {
-  const selected = selectedFill(colors)
+export function schoolTheme(colors: SchoolColors, step: BrandingStep): Record<string, string> {
+  const selected = step === "low" ? null : selectedFill(colors)
+  const charts = step === "low" ? [] : chartColors(colors)
   return {
     ...HUELESS_NEUTRALS,
     "--school-main": normalizeHex(colors.main),
@@ -154,6 +156,7 @@ export function schoolTheme(colors: SchoolColors): Record<string, string> {
           "--school-selected-foreground": selected.text,
         }
       : {}),
+    ...Object.fromEntries(charts.map((color, index) => [`--chart-${index + 1}`, color])),
   }
 }
 
@@ -168,7 +171,8 @@ export interface FrameColors {
   logo: "original" | "white" | "black"
 }
 
-const PAGE = "#ffffff"
+
+const NEUTRAL_PAGE = HUELESS_NEUTRALS["--background"]
 
 const LIGHT_GRAY_FRAME = HUELESS_NEUTRALS["--background"]
 
@@ -210,13 +214,13 @@ function darken(color: string, percent: number): string {
 }
 
 /**
- * The colors of the app frame for a main school color at one step of the
+ * The colors of the app frame for a main school color at one level of the
  * branding scale. The selected nav item takes its fill from the frame, so it
  * shows on every frame, even where the school color matches the frame.
  */
 export function frameColors(color: string, step: BrandingStep): FrameColors {
   const mainColor = normalizeHex(color)
-  if (step === "full-color-frame") {
+  if (step === "high") {
     const frameText = readableText(mainColor)
     return {
       frame: mainColor,
@@ -228,7 +232,7 @@ export function frameColors(color: string, step: BrandingStep): FrameColors {
       logo: frameText === LIGHT_TEXT ? "white" : "black",
     }
   }
-  if (step === "tinted-frame") {
+  if (step === "medium") {
     return {
       ...hueFrame(mainColor),
       frameText: DARK_TEXT,
@@ -249,7 +253,8 @@ export function frameColors(color: string, step: BrandingStep): FrameColors {
 }
 
 export function plainPageColor(color: string, step: BrandingStep): string {
-  if (step === "neutral-frame") return PAGE
+  if (step === "low") return PAGE
+  if (step === "medium") return NEUTRAL_PAGE
   const hue = schoolHue(normalizeHex(color))
   const lightness = isYellowHue(hue) ? YELLOW_PLAIN_PAGE_TINT_LIGHTNESS : PLAIN_PAGE_TINT_LIGHTNESS
   return fromOklch({ l: lightness, c: PLAIN_PAGE_TINT_STRENGTH, h: hue })

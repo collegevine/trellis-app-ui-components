@@ -23,7 +23,7 @@ function renderApp() {
       element: (
         <AppFrame
           school={{ name: "DePaul University", main: "#003da5", logos: [{ src: "/logo.svg" }] }}
-          step="tinted-frame"
+          step="medium"
         >
           <Outlet />
         </AppFrame>

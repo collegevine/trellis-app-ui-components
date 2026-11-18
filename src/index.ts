@@ -49,3 +49,4 @@ export {
   type FrameColors,
   type SchoolColors,
 } from "./lib/branding.js"
+export { chartColors } from "./lib/chart-colors.js"
