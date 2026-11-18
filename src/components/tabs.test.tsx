@@ -17,8 +17,8 @@ function render() {
 }
 
 describe("Tabs", () => {
-  it("marks the selected tab with a line in the text color", () => {
-    expect(render()).toContain("after:bg-foreground")
+  it("marks the selected tab with a line in the school tab color, or the text color with none", () => {
+    expect(render()).toContain("after:bg-[var(--school-tab-line,var(--foreground))]")
   })
 
   it("shows the line only under the selected tab", () => {

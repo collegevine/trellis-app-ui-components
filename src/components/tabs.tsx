@@ -11,8 +11,11 @@ export type TabsProps = TabsPrimitive.Root.Props
  * A set of tabs and the panels that they show. Holds a {@link TabsList} of
  * {@link TabsTrigger}s and one {@link TabsContent} for each tab.
  *
- * A line under the selected tab marks it, in the text color. No tab has a
- * fill, so a tab does not look like a button.
+ * A line under the selected tab marks it. No tab has a fill, so a tab does
+ * not look like a button. In a school-branded app at the tinted and
+ * full-color frame steps, the line takes the main school color from
+ * `--school-tab-line` (see `schoolTheme`). Otherwise the line takes the text
+ * color.
  *
  * @example
  * ```tsx
@@ -65,7 +68,7 @@ export function TabsTrigger({ className, ...props }: TabsTriggerProps) {
       data-slot="tabs-trigger"
       className={cn(
         "relative inline-flex h-full flex-1 items-center justify-center gap-1.5 rounded-md border border-transparent bg-transparent px-1.5 py-0.5 text-sm font-medium whitespace-nowrap text-foreground/60 transition-all group-data-[orientation=vertical]/tabs:w-full group-data-[orientation=vertical]/tabs:justify-start hover:text-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-1 focus-visible:outline-ring disabled:pointer-events-none disabled:opacity-50 has-data-[icon=inline-end]:pr-1 has-data-[icon=inline-start]:pl-1 aria-disabled:pointer-events-none aria-disabled:opacity-50 data-active:text-foreground [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
-        "after:absolute after:bg-foreground after:opacity-0 after:transition-opacity group-data-[orientation=horizontal]/tabs:after:inset-x-0 group-data-[orientation=horizontal]/tabs:after:-bottom-1 group-data-[orientation=horizontal]/tabs:after:h-0.5 group-data-[orientation=vertical]/tabs:after:inset-y-0 group-data-[orientation=vertical]/tabs:after:-right-1 group-data-[orientation=vertical]/tabs:after:w-0.5 data-active:after:opacity-100",
+        "after:absolute after:bg-[var(--school-tab-line,var(--foreground))] after:opacity-0 after:transition-opacity group-data-[orientation=horizontal]/tabs:after:inset-x-0 group-data-[orientation=horizontal]/tabs:after:-bottom-1 group-data-[orientation=horizontal]/tabs:after:h-0.5 group-data-[orientation=vertical]/tabs:after:inset-y-0 group-data-[orientation=vertical]/tabs:after:-right-1 group-data-[orientation=vertical]/tabs:after:w-0.5 data-active:after:opacity-100",
         className
       )}
       {...props}

@@ -42,6 +42,7 @@ export {
   readableText,
   schoolTheme,
   selectedFill,
+  tabLineColor,
   unbrandedFrameColors,
   type AppAudience,
   type BrandingStep,
