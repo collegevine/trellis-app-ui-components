@@ -59,7 +59,7 @@ export type AppFrameBrand =
   | {
       /** The school whose brand the frame shows. */
       school: FrameSchool
-      /** The step on the branding scale. */
+      /** The level on the branding scale. */
       step: BrandingStep
     }
   | {
