@@ -30,6 +30,8 @@ export interface SchoolColors {
 
 const DARK_TEXT = "#111111"
 const LIGHT_TEXT = "#ffffff"
+const PAGE = "#ffffff"
+const SELECTED_CONTRAST = 3
 
 const NEUTRAL_CHROMA = 0.04
 
@@ -73,11 +75,6 @@ export function readableText(fill: string): string {
     : DARK_TEXT
 }
 
-function isNearWhite(color: string): boolean {
-  const { l } = toOklch(color)
-  return isNeutral(color) && l > 0.95
-}
-
 /** A fill and the text that goes on it. */
 export interface Fill {
   fill: string
@@ -90,12 +87,14 @@ export interface Fill {
  * the selected day in a date picker. Tabs, segmented controls and filters keep
  * the neutral look.
  *
- * The fill is the main school color. When the main color is white or close
- * to white, the result is `null` and selected controls keep the neutral look.
+ * The fill is the main school color. A selected control must stand out from
+ * the white page, so when the main color has less than 3:1 contrast with
+ * white, the result is `null` and selected controls keep the neutral look.
+ * Yellow, bright green and bright orange main colors fall in that range.
  */
 export function selectedFill(colors: SchoolColors): Fill | null {
   const main = normalizeHex(colors.main)
-  if (isNearWhite(main)) return null
+  if (contrastRatio(main, PAGE) < SELECTED_CONTRAST) return null
   return { fill: main, text: readableText(main) }
 }
 
@@ -160,7 +159,6 @@ export interface FrameColors {
   logo: "original" | "white" | "black"
 }
 
-const PAGE = "#ffffff"
 
 const NEUTRAL_PAGE = HUELESS_NEUTRALS["--background"]
 
