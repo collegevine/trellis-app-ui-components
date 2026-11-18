@@ -29,6 +29,10 @@ describe("Tabs", () => {
     expect(html).not.toMatch(/<button[^>]*\sdata-active=""[^>]*>Admitted</)
   })
 
+  it("changes the selected tab at once, with no motion", () => {
+    expect(render()).not.toContain("transition")
+  })
+
   it("gives the tabs no fill, so a tab does not look like a button", () => {
     const html = render()
     expect(html).not.toContain("bg-muted")
