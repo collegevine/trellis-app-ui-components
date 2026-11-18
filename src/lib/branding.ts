@@ -8,10 +8,11 @@ import { contrastRatio, fromOklch, normalizeHex, toOklch } from "./color.js"
  * - `tinted-frame`: a light frame in the hue of the main school color, around
  *   a white page. Every school gets the same lightness and the same small
  *   amount of color, and a main color close to gray, black or white gets a
- *   warm neutral. Selected controls take the main school color.
+ *   warm neutral. Selected controls take the main school color when it
+ *   stands out from the page (see {@link selectedFill}).
  * - `full-color-frame`: the main school color as the frame, around a white
  *   page. The logo shows in white. Selected controls take the main school
- *   color.
+ *   color when it stands out from the page.
  */
 export type BrandingStep = "neutral-frame" | "tinted-frame" | "full-color-frame"
 
@@ -121,8 +122,8 @@ const HUELESS_NEUTRALS = {
  *   the text that goes on it.
  * - `--school-selected` and `--school-selected-foreground`: the fill for
  *   selected controls and its text (see {@link selectedFill}). They are left
- *   out at the `neutral-frame` step, and when the main color is white, so
- *   selected controls keep the neutral look.
+ *   out at the `neutral-frame` step, and when the main color is too light for
+ *   the page, so selected controls keep the neutral look.
  *
  * Buttons, the error red, the focus outline and the corner radius stay
  * CollegeVine, so the values do not touch them.
