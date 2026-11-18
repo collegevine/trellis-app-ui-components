@@ -7,7 +7,6 @@ import {
   frameColors,
   plainPageColor,
   readableText,
-  chartColors,
   schoolTheme,
   selectedFill,
 } from "./branding.js"
@@ -72,24 +71,6 @@ describe("selectedFill", () => {
   )
 })
 
-describe("chartColors", () => {
-  it("lists the main color, then the second color", () => {
-    expect(chartColors({ main: "#c41230", second: "#0b5394" })).toEqual(["#c41230", "#0b5394"])
-  })
-
-  it("uses a yellow that just reaches 1.5:1 with the page", () => {
-    expect(chartColors({ main: "#ffcd00" })).toEqual(["#ffcd00"])
-  })
-
-  it("moves the second color first when the main color fails the chart checks", () => {
-    expect(chartColors({ main: "#333333", second: "#0b5394" })).toEqual(["#0b5394"])
-  })
-
-  it.each(["#000000", "#fff8dc"])("leaves out a black or very light second color (%s)", (second) => {
-    expect(chartColors({ main: "#c41230", second })).toEqual(["#c41230"])
-  })
-})
-
 describe("schoolTheme", () => {
   it("sets the main color, its text and the selected fill", () => {
     const theme = schoolTheme({ main: "#003da5" }, "tinted-frame")
@@ -114,8 +95,13 @@ describe("schoolTheme", () => {
     expect(schoolTheme(colors, "neutral-frame")).not.toHaveProperty("--chart-2")
   })
 
-  it("leaves the second chart color to the theme when the school has no second color", () => {
-    expect(schoolTheme({ main: "#c41230" }, "tinted-frame")).not.toHaveProperty("--chart-2")
+  it("fills all five chart colors when a school color passes", () => {
+    const theme = schoolTheme({ main: "#c41230" }, "tinted-frame")
+    for (const index of [1, 2, 3, 4, 5]) expect(theme).toHaveProperty(`--chart-${index}`)
+  })
+
+  it("leaves the chart colors to the theme when no school color passes", () => {
+    expect(schoolTheme({ main: "#333333" }, "tinted-frame")).not.toHaveProperty("--chart-1")
   })
 
   it("sets the selected fill at the full-color-frame step", () => {

@@ -1,3 +1,4 @@
+import { chartColors } from "./chart-colors.js"
 import { contrastRatio, fromOklch, normalizeHex, toOklch } from "./color.js"
 
 /**
@@ -10,7 +11,7 @@ import { contrastRatio, fromOklch, normalizeHex, toOklch } from "./color.js"
  *   amount of color, and a main color close to gray, black or white gets a
  *   warm neutral. Selected controls take the main school color when it
  *   stands out from the page (see {@link selectedFill}). Charts open with the
- *   school colors (see {@link chartColors}).
+ *   school colors (see `chartColors`).
  * - `full-color-frame`: the main school color as the frame, around a white
  *   page. The logo shows in white. Selected controls take the main school
  *   color when it stands out from the page, and charts open with the school
@@ -37,7 +38,6 @@ const DARK_TEXT = "#111111"
 const LIGHT_TEXT = "#ffffff"
 const PAGE = "#ffffff"
 const SELECTED_CONTRAST = 3
-const CHART_CONTRAST = 1.5
 
 const NEUTRAL_CHROMA = 0.04
 
@@ -104,19 +104,6 @@ export function selectedFill(colors: SchoolColors): Fill | null {
   return { fill: main, text: readableText(main) }
 }
 
-/**
- * The school colors for charts: the main color, then the second color, each
- * only when it passes the chart checks. A chart mark needs at least 1.5:1
- * contrast with the white chart background and enough hue that it does not
- * look gray. The first color in the list is the first chart color.
- */
-export function chartColors(colors: SchoolColors): string[] {
-  const candidates = [colors.main, colors.second].filter((color): color is string => color !== undefined)
-  return candidates
-    .map(normalizeHex)
-    .filter((color) => !isNeutral(color) && contrastRatio(color, PAGE) >= CHART_CONTRAST)
-}
-
 const HUELESS_NEUTRALS = {
   "--background": "#fafafa",
   "--muted": "#f5f5f5",
@@ -142,10 +129,10 @@ const HUELESS_NEUTRALS = {
  *   selected controls and its text (see {@link selectedFill}). They are left
  *   out at the `neutral-frame` step, and when the main color is too light for
  *   the page, so selected controls keep the neutral look.
- * - `--chart-1` and `--chart-2`: the school colors that pass the chart checks,
- *   in order (see {@link chartColors}). They are left out at the
- *   `neutral-frame` step, and a chart color with no school color that passes
- *   keeps the theme's value.
+ * - `--chart-1` to `--chart-5`: the school's chart colors, the school colors
+ *   first and generated colors after them (see `chartColors`). They are left
+ *   out at the `neutral-frame` step, and when no school color passes the chart
+ *   checks, so charts keep the theme's colors.
  *
  * Buttons, the error red, the focus outline and the corner radius stay
  * CollegeVine, so the values do not touch them.

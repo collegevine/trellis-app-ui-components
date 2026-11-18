@@ -37,7 +37,6 @@ export {
 } from "./components/app-frame.js"
 export {
   BRANDING_STEPS,
-  chartColors,
   defaultBrandingStep,
   frameColors,
   readableText,
@@ -50,3 +49,4 @@ export {
   type FrameColors,
   type SchoolColors,
 } from "./lib/branding.js"
+export { chartColors } from "./lib/chart-colors.js"
