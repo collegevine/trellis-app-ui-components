@@ -4,13 +4,14 @@ import { contrastRatio, fromOklch, normalizeHex, toOklch } from "./color.js"
  * A step on the branding scale, from least to most school color.
  *
  * - `neutral-frame`: a very light gray frame around a white page. The school color
- *   appears in the logo, in charts and in selected controls.
+ *   appears in the logo and in charts. Selected controls keep the neutral look.
  * - `tinted-frame`: a light frame in the hue of the main school color, around
  *   a white page. Every school gets the same lightness and the same small
  *   amount of color, and a main color close to gray, black or white gets a
- *   warm neutral.
+ *   warm neutral. Selected controls take the main school color.
  * - `full-color-frame`: the main school color as the frame, around a white
- *   page. The logo shows in white.
+ *   page. The logo shows in white. Selected controls take the main school
+ *   color.
  */
 export type BrandingStep = "neutral-frame" | "tinted-frame" | "full-color-frame"
 
@@ -121,7 +122,8 @@ const HUELESS_NEUTRALS = {
  *   the text that goes on it.
  * - `--school-selected` and `--school-selected-foreground`: the fill for
  *   selected controls and its text (see {@link selectedFill}). They are left
- *   out when selected controls keep the neutral look.
+ *   out at the `neutral-frame` step, and when the main color is white, so
+ *   selected controls keep the neutral look.
  *
  * Buttons, the error red, the focus outline and the corner radius stay
  * CollegeVine, so the values do not touch them.
@@ -129,11 +131,11 @@ const HUELESS_NEUTRALS = {
  * @example
  * ```tsx
  * // app/root.tsx
- * <html lang="en" style={schoolTheme({ main: "#003da5" })}>
+ * <html lang="en" style={schoolTheme({ main: "#003da5" }, "tinted-frame")}>
  * ```
  */
-export function schoolTheme(colors: SchoolColors): Record<string, string> {
-  const selected = selectedFill(colors)
+export function schoolTheme(colors: SchoolColors, step: BrandingStep): Record<string, string> {
+  const selected = step === "neutral-frame" ? null : selectedFill(colors)
   return {
     ...HUELESS_NEUTRALS,
     "--school-main": normalizeHex(colors.main),
