@@ -37,7 +37,7 @@ function logoTag(html: string) {
 describe("AppFrame", () => {
   it("puts the logo, the app name and the nav in the top edge of the frame", () => {
     const html = render(
-      <AppFrame school={northfield} step="tinted-frame" appName="Admissions dashboard" nav={nav}>
+      <AppFrame school={northfield} step="medium" appName="Admissions dashboard" nav={nav}>
         <p>Page</p>
       </AppFrame>
     )
@@ -50,7 +50,7 @@ describe("AppFrame", () => {
 
   it("puts the nav down the left side with the left layout", () => {
     const html = render(
-      <AppFrame school={northfield} step="tinted-frame" layout="left" appName="Admissions dashboard" nav={nav} />
+      <AppFrame school={northfield} step="medium" layout="left" appName="Admissions dashboard" nav={nav} />
     )
     const aside = html.match(/<aside[\s\S]*<\/aside>/)?.[0] ?? ""
     expect(aside).toContain("northfield.svg")
@@ -59,34 +59,34 @@ describe("AppFrame", () => {
   })
 
   it("sets the frame colors for the step", () => {
-    const html = render(<AppFrame school={northfield} step="tinted-frame" />)
-    expect(html).toContain(`--frame:${frameColors(northfield.main, "tinted-frame").frame}`)
-    expect(html).toContain('data-step="tinted-frame"')
+    const html = render(<AppFrame school={northfield} step="medium" />)
+    expect(html).toContain(`--frame:${frameColors(northfield.main, "medium").frame}`)
+    expect(html).toContain('data-step="medium"')
   })
 
   it.each(["top", "left"] as const)(
     "colors the page behind the app with the frame color in the %s layout, so overscroll shows the frame",
     (layout) => {
-      const html = render(<AppFrame school={redmond} step="full-color-frame" layout={layout} />)
+      const html = render(<AppFrame school={redmond} step="high" layout={layout} />)
       expect(html).toContain("<style>html{background-color:#c41230;scrollbar-gutter:auto}body{background-color:transparent}</style>")
     }
   )
 
   it("leaves the page behind the app alone in the plain layout", () => {
-    expect(render(<AppFrame school={redmond} step="full-color-frame" layout="plain" />)).not.toContain("<style>")
+    expect(render(<AppFrame school={redmond} step="high" layout="plain" />)).not.toContain("<style>")
   })
 
   it("holds the logo out of sight until the frame has measured it", () => {
-    expect(logoTag(render(<AppFrame school={northfield} step="neutral-frame" />))).toContain("visibility:hidden")
+    expect(logoTag(render(<AppFrame school={northfield} step="low" />))).toContain("visibility:hidden")
   })
 
   it("turns the full-color logo white on the full-color frame when there is no white logo", () => {
-    const html = render(<AppFrame school={redmond} step="full-color-frame" />)
+    const html = render(<AppFrame school={redmond} step="high" />)
     expect(logoTag(html)).toContain("redmond.svg")
     expect(logoTag(html)).toContain("filter:brightness(0) invert(1)")
   })
 
-  it.each(["tinted-frame", "neutral-frame"] as const)(
+  it.each(["medium", "low"] as const)(
     "shows the full-color logo unchanged at the %s step",
     (step) => {
       const html = render(<AppFrame school={northfield} step={step} />)
@@ -96,16 +96,16 @@ describe("AppFrame", () => {
   )
 
   it("shows the school name next to a logo that does not show it", () => {
-    expect(render(<AppFrame school={northfield} step="neutral-frame" />)).toContain(">Northfield University<")
+    expect(render(<AppFrame school={northfield} step="low" />)).toContain(">Northfield University<")
   })
 
   it("leaves out the school name next to a wordmark", () => {
-    expect(render(<AppFrame school={redmond} step="neutral-frame" />)).not.toContain(">Redmond State University<")
+    expect(render(<AppFrame school={redmond} step="low" />)).not.toContain(">Redmond State University<")
   })
 
   it("draws no frame in the plain layout and puts the logo above the page", () => {
     const html = render(
-      <AppFrame school={northfield} step="full-color-frame" layout="plain" appName="Apply" nav={nav}>
+      <AppFrame school={northfield} step="high" layout="plain" appName="Apply" nav={nav}>
         <p>Form</p>
       </AppFrame>
     )
@@ -115,20 +115,23 @@ describe("AppFrame", () => {
     expect(html.indexOf("northfield.svg")).toBeLessThan(html.indexOf("<p>Form</p>"))
   })
 
-  it("puts the form on a white page in the plain layout at the neutral-frame step", () => {
-    const html = render(<AppFrame school={northfield} step="neutral-frame" layout="plain" />)
+  it("puts the form on a white page in the plain layout at the low level", () => {
+    const html = render(<AppFrame school={northfield} step="low" layout="plain" />)
     expect(html).toContain("--frame-page:#ffffff")
     expect(html).toContain("bg-(--frame-page)")
   })
 
-  it.each(["tinted-frame", "full-color-frame"] as const)(
-    "tints the form page in the school hue in the plain layout at the %s step",
-    (step) => {
-      const html = render(<AppFrame school={northfield} step={step} layout="plain" />)
-      expect(html).toContain(`--frame-page:${plainPageColor(northfield.main, step)}`)
-      expect(html).not.toContain("--frame-page:#ffffff")
-    },
-  )
+  it("puts the form on a light gray page in the plain layout at the medium level", () => {
+    const html = render(<AppFrame school={northfield} step="medium" layout="plain" />)
+    expect(html).toContain("--frame-page:#fafafa")
+  })
+
+  it("tints the form page in the school hue in the plain layout at the high level", () => {
+    const html = render(<AppFrame school={northfield} step="high" layout="plain" />)
+    expect(html).toContain(`--frame-page:${plainPageColor(northfield.main, "high")}`)
+    expect(html).not.toContain("--frame-page:#ffffff")
+    expect(html).not.toContain("--frame-page:#fafafa")
+  })
 })
 
 describe("AppFrameNavLink", () => {
