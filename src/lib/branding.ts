@@ -87,8 +87,9 @@ export interface Fill {
 /**
  * The fill for selected controls: a checked checkbox or radio button, a switch
  * that is on, the filled part of a slider, the current page number in a table,
- * the selected day in a date picker. Tabs, segmented controls and filters keep
- * the neutral look.
+ * the selected day in a date picker. A selected tab takes a line in the main
+ * school color instead of a fill (see {@link tabLineColor}). Segmented
+ * controls and filters keep the neutral look.
  *
  * The fill is the main school color. When the main color is white or close
  * to white, the result is `null` and selected controls keep the neutral look.
@@ -97,6 +98,18 @@ export function selectedFill(colors: SchoolColors): Fill | null {
   const main = normalizeHex(colors.main)
   if (isNearWhite(main)) return null
   return { fill: main, text: readableText(main) }
+}
+
+const TAB_LINE_CONTRAST = 3
+
+/**
+ * The color of the line under the selected tab: the main school color. When
+ * the main color has less than 3:1 contrast with the white page, the result is
+ * `null` and the line keeps the neutral look. The tab text stays neutral.
+ */
+export function tabLineColor(colors: SchoolColors): string | null {
+  const main = normalizeHex(colors.main)
+  return contrastRatio(main, PAGE) >= TAB_LINE_CONTRAST ? main : null
 }
 
 const HUELESS_NEUTRALS = {
@@ -124,6 +137,9 @@ const HUELESS_NEUTRALS = {
  *   selected controls and its text (see {@link selectedFill}). They are left
  *   out at the `neutral-frame` step, and when the main color is white, so
  *   selected controls keep the neutral look.
+ * - `--school-tab-line`: the line under the selected tab (see
+ *   {@link tabLineColor}). It is left out at the `neutral-frame` step, and
+ *   when the main color is too light, so the line keeps the neutral look.
  *
  * Buttons, the error red, the focus outline and the corner radius stay
  * CollegeVine, so the values do not touch them.
@@ -136,6 +152,7 @@ const HUELESS_NEUTRALS = {
  */
 export function schoolTheme(colors: SchoolColors, step: BrandingStep): Record<string, string> {
   const selected = step === "neutral-frame" ? null : selectedFill(colors)
+  const tabLine = step === "neutral-frame" ? null : tabLineColor(colors)
   return {
     ...HUELESS_NEUTRALS,
     "--school-main": normalizeHex(colors.main),
@@ -146,6 +163,7 @@ export function schoolTheme(colors: SchoolColors, step: BrandingStep): Record<st
           "--school-selected-foreground": selected.text,
         }
       : {}),
+    ...(tabLine ? { "--school-tab-line": tabLine } : {}),
   }
 }
 

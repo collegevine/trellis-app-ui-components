@@ -9,6 +9,7 @@ import {
   readableText,
   schoolTheme,
   selectedFill,
+  tabLineColor,
 } from "./branding.js"
 import { contrastRatio, type Oklch, toOklch } from "./color.js"
 
@@ -84,6 +85,13 @@ describe("schoolTheme", () => {
     expect(theme["--school-main"]).toBe("#003da5")
   })
 
+  it("sets the tab line at the tinted and full-color steps, and leaves it out at the neutral step", () => {
+    expect(schoolTheme({ main: "#003da5" }, "tinted-frame")["--school-tab-line"]).toBe("#003da5")
+    expect(schoolTheme({ main: "#003da5" }, "full-color-frame")["--school-tab-line"]).toBe("#003da5")
+    expect(schoolTheme({ main: "#003da5" }, "neutral-frame")).not.toHaveProperty("--school-tab-line")
+    expect(schoolTheme({ main: "#ffcd00" }, "tinted-frame")).not.toHaveProperty("--school-tab-line")
+  })
+
   it("sets the selected fill at the full-color-frame step", () => {
     expect(schoolTheme({ main: "#003da5" }, "full-color-frame")["--school-selected"]).toBe("#003da5")
   })
@@ -137,6 +145,26 @@ describe("plainPageColor", () => {
   it("gives a main color close to gray a warm tint", () => {
     expect(Math.abs(toOklch(plainPageColor("#333333", "full-color-frame")).h - 97)).toBeLessThan(5)
   })
+})
+
+describe("tabLineColor", () => {
+  it("draws the line in the main school color", () => {
+    expect(tabLineColor({ main: "#003da5" })).toBe("#003da5")
+  })
+
+  it.each(["#ffcd00", "#c4d600"])(
+    "keeps the neutral line when the main color has less than 3:1 contrast with the page (%s)",
+    (main) => {
+      expect(tabLineColor({ main })).toBeNull()
+    }
+  )
+
+  it.each(["#003da5", "#c41230", "#ed2b74", "#bf5700"])(
+    "gives a line with at least 3:1 contrast with the white page (%s)",
+    (main) => {
+      expect(contrastRatio(tabLineColor({ main }) as string, "#ffffff")).toBeGreaterThanOrEqual(3)
+    }
+  )
 })
 
 describe("frameColors", () => {
