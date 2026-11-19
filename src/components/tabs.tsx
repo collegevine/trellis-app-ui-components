@@ -47,7 +47,7 @@ export function TabsList({ className, ...props }: TabsListProps) {
     <TabsPrimitive.List
       data-slot="tabs-list"
       className={cn(
-        "group/tabs-list inline-flex w-fit items-center justify-center gap-1 p-1 text-muted-foreground group-data-[orientation=horizontal]/tabs:h-9 group-data-[orientation=horizontal]/tabs:max-w-full group-data-[orientation=horizontal]/tabs:overflow-x-auto group-data-[orientation=vertical]/tabs:h-fit group-data-[orientation=vertical]/tabs:flex-col",
+        "group/tabs-list inline-flex w-fit items-center justify-start gap-1 p-1 text-muted-foreground group-data-[orientation=horizontal]/tabs:h-9 group-data-[orientation=horizontal]/tabs:max-w-full group-data-[orientation=horizontal]/tabs:overflow-x-auto group-data-[orientation=vertical]/tabs:h-fit group-data-[orientation=vertical]/tabs:flex-col",
         className
       )}
       {...props}

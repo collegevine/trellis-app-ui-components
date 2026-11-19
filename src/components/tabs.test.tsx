@@ -45,6 +45,12 @@ describe("Tabs", () => {
     expect(html).toContain("group-data-[orientation=horizontal]/tabs:overflow-x-auto")
   })
 
+  it("starts the row at the first tab, so a row that scrolls sideways shows the first tab", () => {
+    const list = render().match(/<div[^>]*data-slot="tabs-list"[^>]*>/)?.[0] ?? ""
+    expect(list).toContain("justify-start")
+    expect(list).not.toContain("justify-center")
+  })
+
   it("lays out the tabs by the orientation that Base UI writes on the root", () => {
     const html = render()
     expect(html).toContain('data-orientation="horizontal"')
