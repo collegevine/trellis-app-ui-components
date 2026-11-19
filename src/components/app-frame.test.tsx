@@ -8,14 +8,13 @@ import { AppFrame, AppFrameNavLink, type FrameSchool } from "./app-frame.js"
 const northfield: FrameSchool = {
   name: "Northfield University",
   main: "#003da5",
-  logo: { src: "/logos/northfield.svg" },
-  whiteLogo: { src: "/logos/northfield-white.svg" },
+  logos: [{ src: "/logos/northfield.svg" }, { src: "/logos/northfield-white.svg" }],
 }
 
 const redmond: FrameSchool = {
   name: "Redmond State University",
   main: "#c41230",
-  logo: { src: "/logos/redmond.svg", showsName: true },
+  logos: [{ src: "/logos/redmond.svg", showsName: true }],
 }
 
 function render(element: React.ReactElement, path = "/") {
@@ -77,10 +76,8 @@ describe("AppFrame", () => {
     expect(render(<AppFrame school={redmond} step="high" layout="plain" />)).not.toContain("<style>")
   })
 
-  it("shows the approved white logo on the full-color frame", () => {
-    const html = render(<AppFrame school={northfield} step="high" />)
-    expect(logoTag(html)).toContain("northfield-white.svg")
-    expect(logoTag(html)).not.toContain("filter")
+  it("holds the logo out of sight until the frame has measured it", () => {
+    expect(logoTag(render(<AppFrame school={northfield} step="low" />))).toContain("visibility:hidden")
   })
 
   it("turns the full-color logo white on the full-color frame when there is no white logo", () => {
