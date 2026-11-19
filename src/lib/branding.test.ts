@@ -180,9 +180,9 @@ describe("frameColors", () => {
     expect(colors.logo).toBe("black")
   })
 
-  it("draws a very light gray frame with no school color around a white page at the low level", () => {
+  it("draws a light gray frame with no school color around a white page at the low level", () => {
     const colors = frameColors("#c41230", "low")
-    expect(colors.frame).toBe("#fafafa")
+    expect(colors.frame).toBe("#f5f5f5")
     expect(colors.page).toBe("#ffffff")
     expect(colors.frameText).toBe("#111111")
     expect(colors.logo).toBe("original")
@@ -191,8 +191,8 @@ describe("frameColors", () => {
 
   it("fills the selected nav item at the low level with the frame darkened by 8%, and hover by 4%", () => {
     const colors = frameColors("#003da5", "low")
-    expect(colors.navSelected).toBe("color-mix(in oklab, #fafafa, #000000 8%)")
-    expect(colors.navHover).toBe("color-mix(in oklab, #fafafa, #000000 4%)")
+    expect(colors.navSelected).toBe("color-mix(in oklab, #f5f5f5, #000000 8%)")
+    expect(colors.navHover).toBe("color-mix(in oklab, #f5f5f5, #000000 4%)")
   })
 })
 
