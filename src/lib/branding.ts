@@ -175,7 +175,7 @@ export interface FrameColors {
 
 const NEUTRAL_PAGE = HUELESS_NEUTRALS["--background"]
 
-const LIGHT_GRAY_FRAME = HUELESS_NEUTRALS["--background"]
+const LIGHT_GRAY_FRAME = HUELESS_NEUTRALS["--muted"]
 
 const HUE_FRAME_LIGHTNESS = 0.9625
 const YELLOW_HUE_FRAME_LIGHTNESS = 0.98
