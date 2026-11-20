@@ -31,8 +31,15 @@ function toLinear(channel: number): number {
   return value <= 0.04045 ? value / 12.92 : ((value + 0.055) / 1.055) ** 2.4
 }
 
+export function linearRgb(color: string): [number, number, number] {
+  return parseHex(color).map(toLinear) as [number, number, number]
+}
+
 function toOklab(color: string): [number, number, number] {
-  const [r, g, b] = parseHex(color).map(toLinear) as [number, number, number]
+  return oklabFromLinear(linearRgb(color))
+}
+
+export function oklabFromLinear([r, g, b]: [number, number, number]): [number, number, number] {
   const l = Math.cbrt(0.4122214708 * r + 0.5363325363 * g + 0.0514459929 * b)
   const m = Math.cbrt(0.2119034982 * r + 0.6806995451 * g + 0.1073969566 * b)
   const s = Math.cbrt(0.0883024619 * r + 0.2817188376 * g + 0.6299787005 * b)
@@ -72,6 +79,19 @@ function linearFromOklch({ l, c, h }: Oklch): [number, number, number] {
 
 export function fromOklch(color: Oklch): string {
   return `#${linearFromOklch(color).map((channel) => fromLinear(channel).toString(16).padStart(2, "0")).join("")}`
+}
+
+export function maxChroma(l: number, h: number): number {
+  const inGamut = (c: number) =>
+    linearFromOklch({ l, c, h }).every((channel) => channel >= -1e-4 && channel <= 1 + 1e-4)
+  let low = 0
+  let high = 0.4
+  for (let step = 0; step < 20; step++) {
+    const middle = (low + high) / 2
+    if (inGamut(middle)) low = middle
+    else high = middle
+  }
+  return low
 }
 
 function luminance(color: string): number {
