@@ -13,6 +13,15 @@ describe("Link", () => {
     )
     expect(html).toMatch(/^<a [^>]*href="\/students\/42"/)
     expect(html).toContain("text-primary")
-    expect(html).toContain("hover:underline")
+  })
+
+  it("underlines the link at rest, so that it stands apart from text in the same color", () => {
+    const html = renderToStaticMarkup(
+      <MemoryRouter>
+        <Link href="/students/42">Ana Silva</Link>
+      </MemoryRouter>
+    )
+    expect(html).toMatch(/class="[^"]*(^|\s)underline(\s|")/)
+    expect(html).toContain("hover:decoration-2")
   })
 })
