@@ -36,6 +36,17 @@ function logoTag(html: string) {
 }
 
 describe("AppFrame", () => {
+  it("keeps positioned content inside the page, so that it cannot make the window scroll past the frame", () => {
+    const html = render(
+      <AppFrame appName="Admissions dashboard" nav={nav}>
+        <p>Page</p>
+      </AppFrame>
+    )
+    const page = html.match(/<div[^>]*data-slot="app-frame-page"[^>]*>/)?.[0] ?? ""
+    expect(page).toMatch(/class="(?:[^"]*\s)?relative[\s"]/)
+    expect(page).toContain("overflow-clip")
+  })
+
   it("puts the logo, the app name and the nav in the top edge of the frame", () => {
     const html = render(
       <AppFrame school={depaul} step="medium" appName="Admissions dashboard" nav={nav}>
