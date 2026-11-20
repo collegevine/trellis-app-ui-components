@@ -2,7 +2,7 @@ import { renderToStaticMarkup } from "react-dom/server"
 import { MemoryRouter } from "react-router"
 import { describe, expect, it } from "vitest"
 
-import { frameColors } from "../lib/branding.js"
+import { frameColors, plainPageColor } from "../lib/branding.js"
 import { AppFrame, AppFrameNavLink, type FrameSchool } from "./app-frame.js"
 
 const depaul: FrameSchool = {
@@ -77,6 +77,39 @@ describe("AppFrame", () => {
     }
   )
 
+  it("leaves the page behind the app alone in the plain layout", () => {
+    expect(render(<AppFrame school={barry} step="high" layout="plain" />)).not.toContain("<style>")
+  })
+
+  it("draws no frame in the plain layout and puts the school name above the page", () => {
+    const html = render(
+      <AppFrame school={depaul} step="high" layout="plain" appName="Apply" nav={nav}>
+        <p>Form</p>
+      </AppFrame>
+    )
+    expect(html).not.toContain("--frame:")
+    expect(html).not.toContain("By college")
+    expect(html).toContain(">DePaul University<")
+    expect(html.indexOf("DePaul University")).toBeLessThan(html.indexOf("<p>Form</p>"))
+  })
+
+  it("puts the form on a white page in the plain layout at the low level", () => {
+    const html = render(<AppFrame school={depaul} step="low" layout="plain" />)
+    expect(html).toContain("--frame-page:#ffffff")
+    expect(html).toContain("bg-(--frame-page)")
+  })
+
+  it("puts the form on a light gray page in the plain layout at the medium level", () => {
+    const html = render(<AppFrame school={depaul} step="medium" layout="plain" />)
+    expect(html).toContain("--frame-page:#fafafa")
+  })
+
+  it("tints the form page in the school hue in the plain layout at the high level", () => {
+    const html = render(<AppFrame school={depaul} step="high" layout="plain" />)
+    expect(html).toContain(`--frame-page:${plainPageColor(depaul.main, "high")}`)
+    expect(html).not.toContain("--frame-page:#ffffff")
+    expect(html).not.toContain("--frame-page:#fafafa")
+  })
 })
 
 describe("AppFrameNavLink", () => {
@@ -123,9 +156,9 @@ describe("AppFrame with no school brand", () => {
         <p>Page</p>
       </AppFrame>
     )
-    expect(html).not.toContain("--frame")
+    expect(html).not.toContain("--frame:")
+    expect(html).toContain("--frame-page:var(--background)")
     expect(html).not.toContain("<header")
-    expect(html).not.toContain("<style>")
     expect(html).toContain("<p>Page</p>")
   })
 })

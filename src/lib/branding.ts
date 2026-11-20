@@ -160,6 +160,8 @@ export interface FrameColors {
 }
 
 
+const NEUTRAL_PAGE = HUELESS_NEUTRALS["--background"]
+
 const LIGHT_GRAY_FRAME = HUELESS_NEUTRALS["--muted"]
 
 const HUE_FRAME_LIGHTNESS = 0.9625
@@ -170,6 +172,10 @@ const WARM_NEUTRAL_HUE = 97
 function isYellowHue(hue: number): boolean {
   return hue >= 105 && hue < 125
 }
+
+const PLAIN_PAGE_TINT_LIGHTNESS = 0.98
+const YELLOW_PLAIN_PAGE_TINT_LIGHTNESS = 0.9885
+const PLAIN_PAGE_TINT_STRENGTH = 0.0138
 
 function schoolHue(mainColor: string): number {
   return isNeutral(mainColor) ? WARM_NEUTRAL_HUE : toOklch(mainColor).h
@@ -231,6 +237,13 @@ export function frameColors(color: string, step: BrandingStep): FrameColors {
   }
 }
 
+export function plainPageColor(color: string, step: BrandingStep): string {
+  if (step === "low") return PAGE
+  if (step === "medium") return NEUTRAL_PAGE
+  const hue = schoolHue(normalizeHex(color))
+  const lightness = isYellowHue(hue) ? YELLOW_PLAIN_PAGE_TINT_LIGHTNESS : PLAIN_PAGE_TINT_LIGHTNESS
+  return fromOklch({ l: lightness, c: PLAIN_PAGE_TINT_STRENGTH, h: hue })
+}
 
 /**
  * The colors of the app frame for an app with no school brand. They come from
