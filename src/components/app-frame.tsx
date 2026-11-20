@@ -266,6 +266,7 @@ export function AppFrame({
   }, [layout])
 
   const colors = school ? frameColors(school.main, step) : unbrandedFrameColors()
+  const hasLogo = Boolean(school && school.logos.length > 0)
   const measurements = useLogoMeasurements(school?.logos ?? [])
   const logoIn = (space: LogoSpace, look: FrameColors["logo"] = colors.logo) =>
     school ? <Logo school={school} look={look} space={space} measurements={measurements} /> : null
@@ -278,7 +279,7 @@ export function AppFrame({
         className="min-h-screen bg-(--frame-page) text-foreground"
         style={{ "--frame-page": school ? plainPageColor(school.main, step) : colors.page } as CSSProperties}
       >
-        {school ? (
+        {hasLogo ? (
           <header className="flex h-14 items-center px-6">
             {logoIn(ABOVE_PAGE, "original")}
           </header>
@@ -302,8 +303,8 @@ export function AppFrame({
   )
   const sideNav = (
     <>
-      <div className="flex h-14 shrink-0 items-center px-6">{school ? logoIn(LEFT_NAV) : title}</div>
-      {school && appName ? <div className="px-6 pt-2 pb-2 text-sm font-semibold">{appName}</div> : null}
+      <div className="flex h-14 shrink-0 items-center px-6">{hasLogo ? logoIn(LEFT_NAV) : title}</div>
+      {hasLogo && appName ? <div className="px-6 pt-2 pb-2 text-sm font-semibold">{appName}</div> : null}
       {nav ? (
         <nav data-slot="app-frame-nav" className="flex flex-col gap-0.5 px-3 pb-3">
           {nav}
@@ -336,7 +337,7 @@ export function AppFrame({
           </Drawer.Portal>
         </Drawer.Root>
       ) : null}
-      <span className={cn("flex min-w-0 items-center", nav ? "" : "px-2")}>{school ? logoIn(PHONE_BAR) : title}</span>
+      <span className={cn("flex min-w-0 items-center", nav ? "" : "px-2")}>{hasLogo ? logoIn(PHONE_BAR) : title}</span>
     </div>
   )
   const page = (
@@ -395,8 +396,8 @@ export function AppFrame({
       {canvas}
       {mobileBar}
       <header className="hidden h-14 shrink-0 items-center gap-4 px-4 md:flex">
-        {school ? logoIn(TOP_EDGE) : title}
-        {school && title ? (
+        {hasLogo ? logoIn(TOP_EDGE) : title}
+        {hasLogo && title ? (
           <>
             <span aria-hidden="true" className="h-5 w-px shrink-0 bg-current opacity-30" />
             {title}
