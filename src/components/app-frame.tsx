@@ -5,7 +5,6 @@ import { NavLink, useLocation, type NavLinkProps } from "react-router"
 
 import {
   frameColors,
-  plainPageColor,
   unbrandedFrameColors,
   type BrandingStep,
 } from "../lib/branding.js"
@@ -26,14 +25,8 @@ export interface FrameSchool {
  *   the school name. Without a school, the app name starts the top edge.
  * - `left`: the nav runs down the left side of the frame, under the school
  *   name and the app name.
- * - `plain`: no frame. The school name sits above the page. With a school brand, the
- *   page is white at the `low` level, a light gray at the
- *   `medium` level, and a very light tint in the hue of the main school
- *   color at the `high` level. Use the plain layout only on a
- *   page where a user fills out a form and sees nothing else of the app. A
- *   page that the people who manage the form also use keeps the frame.
  */
-export type AppFrameLayout = "top" | "left" | "plain"
+export type AppFrameLayout = "top" | "left"
 
 /** The school brand for {@link AppFrame}, or none. */
 export type AppFrameBrand =
@@ -146,25 +139,15 @@ export function AppFrame({
     return () => observer.disconnect()
   }, [layout])
 
-  const colors = school ? frameColors(school.main, step) : unbrandedFrameColors()
-
-  if (layout === "plain" || (!school && !nav)) {
+  if (!school && !nav) {
     return (
-      <div
-        data-slot="app-frame"
-        data-layout="plain"
-        className="min-h-screen bg-(--frame-page) text-foreground"
-        style={{ "--frame-page": school ? plainPageColor(school.main, step) : colors.page } as CSSProperties}
-      >
-        {school ? (
-          <header className="flex h-14 items-center px-6">
-            <SchoolName school={school} />
-          </header>
-        ) : null}
+      <div data-slot="app-frame" data-layout="plain" className="min-h-screen bg-background text-foreground">
         <main className={className}>{children}</main>
       </div>
     )
   }
+
+  const colors = school ? frameColors(school.main, step) : unbrandedFrameColors()
 
   const vars = {
     "--frame": colors.frame,
