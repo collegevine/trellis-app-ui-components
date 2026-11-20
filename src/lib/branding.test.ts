@@ -5,7 +5,6 @@ import {
   BRANDING_STEPS,
   defaultBrandingStep,
   frameColors,
-  plainPageColor,
   readableText,
   schoolTheme,
   selectedFill,
@@ -110,35 +109,6 @@ describe("schoolTheme", () => {
     for (const name of ["--primary", "--primary-foreground", "--destructive", "--ring", "--radius"]) {
       expect(theme).not.toHaveProperty(name)
     }
-  })
-})
-
-describe("plainPageColor", () => {
-  it("keeps a page with no frame white at the low level", () => {
-    expect(plainPageColor("#c41230", "low")).toBe("#ffffff")
-  })
-
-  it("gives a page with no frame a light gray with no school color at the medium level", () => {
-    expect(plainPageColor("#c41230", "medium")).toBe("#fafafa")
-    expect(plainPageColor("#003da5", "medium")).toBe("#fafafa")
-  })
-
-  it("tints a page with no frame very lightly in the school hue at the high level", () => {
-    const page = toOklch(plainPageColor("#c41230", "high"))
-    expect(page.l).toBeCloseTo(0.98, 2)
-    expect(page.c).toBeGreaterThan(0.005)
-    expect(page.c).toBeLessThan(0.02)
-    expect(Math.abs(page.h - toOklch("#c41230").h)).toBeLessThan(5)
-  })
-
-  it("tints a page with no frame more lightly for a yellow school color", () => {
-    const yellow = toOklch(plainPageColor("#c4d600", "high"))
-    const red = toOklch(plainPageColor("#c41230", "high"))
-    expect(yellow.l).toBeGreaterThan(red.l + 0.005)
-  })
-
-  it("gives a main color close to gray a warm tint", () => {
-    expect(Math.abs(toOklch(plainPageColor("#333333", "high")).h - 97)).toBeLessThan(5)
   })
 })
 
