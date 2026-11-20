@@ -11,6 +11,8 @@ const depaul: FrameSchool = {
   logos: [{ src: "/logos/depaul.svg" }, { src: "/logos/depaul-white.svg" }],
 }
 
+const noLogo: FrameSchool = { name: "Monza University", main: "#7a1f2b", logos: [] }
+
 const barry: FrameSchool = {
   name: "Barry University",
   main: "#c41230",
@@ -35,6 +37,23 @@ function logoTag(html: string) {
 }
 
 describe("AppFrame", () => {
+  it("leaves out the logo spot and its divider when the school has no logo", () => {
+    const top = render(
+      <AppFrame school={noLogo} step="medium" appName="Deposit holds" nav={nav}>
+        <p>Page</p>
+      </AppFrame>
+    )
+    const header = top.match(/<header[\s\S]*<\/header>/)?.[0] ?? ""
+    expect(header).toMatch(/^<header[^>]*><span[^>]*>Deposit holds<\/span>/)
+    expect(header).not.toContain("w-px")
+    const plain = render(
+      <AppFrame school={noLogo} step="medium" layout="plain">
+        <p>Form</p>
+      </AppFrame>
+    )
+    expect(plain).not.toContain("<header")
+  })
+
   it("keeps positioned content inside the page, so that it cannot make the window scroll past the frame", () => {
     const html = render(
       <AppFrame appName="Admissions dashboard" nav={nav}>
