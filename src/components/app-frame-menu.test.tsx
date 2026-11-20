@@ -25,7 +25,7 @@ function renderApp(layout: AppFrameLayout, withNav = true) {
       path: "/",
       element: (
         <AppFrame
-          school={{ name: "DePaul University", main: "#003da5" }}
+          school={{ name: "DePaul University", main: "#003da5", logos: [{ src: "/logo.svg" }] }}
           step="medium"
           layout={layout}
           appName="Admissions dashboard"
