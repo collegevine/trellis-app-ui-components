@@ -26,6 +26,14 @@ export {
   type TextFieldProps,
 } from "./components/text-field.js"
 export {
+  AppFrame,
+  AppFrameNavLink,
+  type AppFrameLayout,
+  type AppFrameNavLinkProps,
+  type AppFrameProps,
+} from "./components/app-frame.js"
+export { unbrandedFrameColors, type FrameColors } from "./lib/branding.js"
+export {
   Tabs,
   TabsContent,
   TabsList,
