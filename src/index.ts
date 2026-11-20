@@ -33,7 +33,6 @@ export {
   type AppFrameNavLinkProps,
   type AppFrameProps,
   type FrameSchool,
-  type SchoolLogo,
 } from "./components/app-frame.js"
 export {
   BRANDING_STEPS,

@@ -165,7 +165,6 @@ describe("frameColors", () => {
     expect(colors.frame).toBe("#c41230")
     expect(colors.frameText).toBe("#ffffff")
     expect(colors.page).toBe("#ffffff")
-    expect(colors.logo).toBe("white")
   })
 
   it("fills the selected nav item in the full-color frame with a light tint and dark text", () => {
@@ -177,7 +176,6 @@ describe("frameColors", () => {
   it("puts dark text on a full-color frame in a light color", () => {
     const colors = frameColors("#ffcd00", "high")
     expect(colors.frameText).toBe("#111111")
-    expect(colors.logo).toBe("black")
   })
 
   it("draws a light gray frame with no school color around a white page at the low level", () => {
@@ -185,7 +183,6 @@ describe("frameColors", () => {
     expect(colors.frame).toBe("#f5f5f5")
     expect(colors.page).toBe("#ffffff")
     expect(colors.frameText).toBe("#111111")
-    expect(colors.logo).toBe("original")
     expect(JSON.stringify(colors)).not.toContain("#c41230")
   })
 
