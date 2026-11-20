@@ -28,15 +28,22 @@ export {
 export {
   AppFrame,
   AppFrameNavLink,
+  type AppFrameBrand,
   type AppFrameLayout,
   type AppFrameNavLinkProps,
   type AppFrameProps,
+  type FrameSchool,
 } from "./components/app-frame.js"
 export {
+  BRANDING_STEPS,
+  defaultBrandingStep,
+  frameColors,
   readableText,
   schoolTheme,
   selectedFill,
   unbrandedFrameColors,
+  type AppAudience,
+  type BrandingStep,
   type Fill,
   type FrameColors,
   type SchoolColors,

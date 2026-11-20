@@ -5,7 +5,7 @@ import { createRoot } from "react-dom/client"
 import { createMemoryRouter, Outlet, RouterProvider } from "react-router"
 import { afterEach, describe, expect, it, vi } from "vitest"
 
-import { AppFrame, AppFrameNavLink } from "./app-frame.js"
+import { AppFrame } from "./app-frame.js"
 
 declare global {
   var IS_REACT_ACT_ENVIRONMENT: boolean
@@ -21,7 +21,10 @@ function renderApp() {
     {
       path: "/",
       element: (
-        <AppFrame appName="Admissions dashboard" nav={<AppFrameNavLink to="/">Overview</AppFrameNavLink>}>
+        <AppFrame
+          school={{ name: "DePaul University", main: "#003da5" }}
+          step="medium"
+        >
           <Outlet />
         </AppFrame>
       ),
