@@ -59,4 +59,3 @@ export {
   type TabsProps,
   type TabsTriggerProps,
 } from "./components/tabs.js"
-export { chartColors } from "./lib/chart-colors.js"
