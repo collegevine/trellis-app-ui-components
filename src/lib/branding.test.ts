@@ -154,8 +154,8 @@ describe("plainPageColor", () => {
     expect(yellow.l).toBeGreaterThan(red.l + 0.005)
   })
 
-  it("gives a main color close to gray a warm tint", () => {
-    expect(Math.abs(toOklch(plainPageColor("#333333", "high")).h - 97)).toBeLessThan(5)
+  it("keeps a page with no frame light gray at the high level for a main color close to gray", () => {
+    expect(plainPageColor("#333333", "high")).toBe("#fafafa")
   })
 })
 
@@ -235,10 +235,8 @@ describe("frameColors at the tinted step", () => {
     ["dark gray", "#333333"],
     ["black", "#000000"],
     ["white", "#ffffff"],
-  ])("draws a warm frame for a %s main color", (_, main) => {
-    const frame = toOklch(frameColors(main, "medium").frame)
-    expect(frame.c).toBeGreaterThan(0.014)
-    expect(hueGap(frame.h, 97)).toBeLessThan(6)
+  ])("draws the light gray frame of the low level for a %s main color", (_, main) => {
+    expect(frameColors(main, "medium")).toEqual(frameColors(main, "low"))
   })
 
   it.each(schools)(
