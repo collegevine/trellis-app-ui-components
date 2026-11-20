@@ -33,3 +33,13 @@ export {
   type AppFrameProps,
 } from "./components/app-frame.js"
 export { unbrandedFrameColors, type FrameColors } from "./lib/branding.js"
+export {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+  type TabsContentProps,
+  type TabsListProps,
+  type TabsProps,
+  type TabsTriggerProps,
+} from "./components/tabs.js"
