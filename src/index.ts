@@ -49,3 +49,13 @@ export {
   type SchoolColors,
 } from "./lib/branding.js"
 export { chartColors } from "./lib/chart-colors.js"
+export {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+  type TabsContentProps,
+  type TabsListProps,
+  type TabsProps,
+  type TabsTriggerProps,
+} from "./components/tabs.js"
