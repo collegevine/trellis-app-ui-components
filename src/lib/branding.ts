@@ -1,18 +1,20 @@
+import { chartColors } from "./chart-colors.js"
 import { contrastRatio, fromOklch, normalizeHex, toOklch } from "./color.js"
 
 /**
  * A level on the branding scale, from least to most school color.
  *
  * - `low`: a very light gray frame around a white page. Selected controls
- *   keep the neutral look.
+ *   and charts keep the neutral look.
  * - `medium`: a light frame in the hue of the main school color, around
  *   a white page. Every school gets the same lightness and the same small
  *   amount of color, and a main color close to gray, black or white gets a
  *   warm neutral. Selected controls take the main school color when it
- *   stands out from the page (see {@link selectedFill}).
+ *   stands out from the page (see {@link selectedFill}). Charts open with the
+ *   school colors (see `chartColors`).
  * - `high`: the main school color as the frame, around a white
  *   page. Selected controls take the main school color when it stands out
- *   from the page.
+ *   from the page, and charts open with the school colors.
  */
 export type BrandingStep = "low" | "medium" | "high"
 
@@ -27,6 +29,8 @@ export const BRANDING_STEPS: readonly BrandingStep[] = [
 export interface SchoolColors {
   /** The main school color, such as `#003da5`. */
   main: string
+  /** The second school color, if the school has one. Only charts use it. */
+  second?: string
 }
 
 const DARK_TEXT = "#111111"
@@ -124,6 +128,10 @@ const HUELESS_NEUTRALS = {
  *   selected controls and its text (see {@link selectedFill}). They are left
  *   out at the `low` level, and when the main color is too light for
  *   the page, so selected controls keep the neutral look.
+ * - `--chart-1` to `--chart-5`: the school's chart colors, the school colors
+ *   first and generated colors after them (see `chartColors`). They are left
+ *   out at the `low` level, and when no school color passes the chart
+ *   checks, so charts keep the theme's colors.
  *
  * Buttons, the error red, the focus outline and the corner radius stay
  * CollegeVine, so the values do not touch them.
@@ -136,6 +144,7 @@ const HUELESS_NEUTRALS = {
  */
 export function schoolTheme(colors: SchoolColors, step: BrandingStep): Record<string, string> {
   const selected = step === "low" ? null : selectedFill(colors)
+  const charts = step === "low" ? [] : chartColors(colors)
   return {
     ...HUELESS_NEUTRALS,
     "--school-main": normalizeHex(colors.main),
@@ -146,6 +155,7 @@ export function schoolTheme(colors: SchoolColors, step: BrandingStep): Record<st
           "--school-selected-foreground": selected.text,
         }
       : {}),
+    ...Object.fromEntries(charts.map((color, index) => [`--chart-${index + 1}`, color])),
   }
 }
 
