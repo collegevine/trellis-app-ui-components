@@ -52,9 +52,15 @@ export interface FrameSchool {
  * - `plain`: no frame. The logo sits above the page. With a school brand, the
  *   page is white at the `low` level, a light gray at the
  *   `medium` level, and a very light tint in the hue of the main school
- *   color at the `high` level. Use the plain layout only on a
- *   page where a user fills out a form and sees nothing else of the app. A
- *   page that the people who manage the form also use keeps the frame.
+ *   color at the `high` level. Use the plain layout on a page where a user
+ *   fills out a form and sees nothing else of the app. The frame is for
+ *   school staff who work in the app. On a page that both non-staff and
+ *   school staff use (non-staff fill out the form, and staff view, edit or
+ *   manage it), pick the layout for each viewer when the page loads: a
+ *   signed-in member of the school staff sees the frame, and every other
+ *   viewer sees the plain layout. A form page that anyone with the link can
+ *   open has no sign-in, so it cannot tell staff from non-staff, and every
+ *   viewer sees the plain layout there.
  */
 export type AppFrameLayout = "top" | "left" | "plain"
 
