@@ -43,27 +43,27 @@ function isNeutral(color: string): boolean {
 /**
  * Who an app is for.
  *
- * - `students`: students or other people outside the school staff, such as
+ * - `non-staff`: people outside the school staff, such as students,
  *   applicants, admitted students, families, alumni or donors.
  * - `staff`: school staff. Use it too when the audience is mixed or unclear.
  */
-export type AppAudience = "students" | "staff"
+export type AppAudience = "non-staff" | "staff"
 
 /**
  * The level on the branding scale for a school's first app, picked from who the
- * app is for. An app for students starts at `medium`, and an app for
+ * app is for. An app for non-staff starts at `medium`, and an app for
  * staff starts at `low`. It never returns `high`.
  *
  * @example
  * ```ts
- * defaultBrandingStep("students") // "medium"
+ * defaultBrandingStep("non-staff") // "medium"
  * defaultBrandingStep("staff") // "low"
  * ```
  */
 export function defaultBrandingStep(audience: AppAudience): BrandingStep {
-  if (audience === "students") return "medium"
+  if (audience === "non-staff") return "medium"
   if (audience === "staff") return "low"
-  throw new Error(`Expected "students" or "staff", got "${String(audience)}"`)
+  throw new Error(`Expected "non-staff" or "staff", got "${String(audience)}"`)
 }
 
 /**
