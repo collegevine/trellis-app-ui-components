@@ -13,8 +13,8 @@ import {
 import { contrastRatio, type Oklch, toOklch } from "./color.js"
 
 describe("defaultBrandingStep", () => {
-  it("starts an app for students at the tinted frame", () => {
-    expect(defaultBrandingStep("students")).toBe("medium")
+  it("starts an app for non-staff at the tinted frame", () => {
+    expect(defaultBrandingStep("non-staff")).toBe("medium")
   })
 
   it("starts an app for staff at the neutral frame", () => {
@@ -22,7 +22,7 @@ describe("defaultBrandingStep", () => {
   })
 
   it("rejects a school color in place of an audience", () => {
-    expect(() => defaultBrandingStep("#003da5" as AppAudience)).toThrow(/"students" or "staff"/)
+    expect(() => defaultBrandingStep("#003da5" as AppAudience)).toThrow(/"non-staff" or "staff"/)
   })
 })
 
