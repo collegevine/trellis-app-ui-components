@@ -355,7 +355,7 @@ export function AppFrame({
         <div
           data-slot="app-frame-page"
           className={cn(
-            "shrink-0 grow rounded-xl bg-(--frame-page) text-foreground",
+            "relative shrink-0 grow overflow-clip rounded-xl bg-(--frame-page) text-foreground",
             hasScrollbar && "rounded-r-none",
             className
           )}
