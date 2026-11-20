@@ -6,7 +6,7 @@ import { Link as RouterLink } from "react-router"
 import { cn } from "../lib/utils.js"
 
 /** The Link component's look, shared with the button's `link` style. */
-export const linkStyles = "text-primary underline-offset-4 hover:underline"
+export const linkStyles = "text-primary underline underline-offset-4 hover:decoration-2"
 
 /**
  * Props for {@link Link}: every prop of React Router's `Link`, with `href` in
@@ -19,7 +19,8 @@ export type LinkProps = Omit<ComponentProps<typeof RouterLink>, "to"> & {
 
 /**
  * Text that opens another page. Renders a React Router link: text in the
- * primary color, underlined on hover, with a focus ring for keyboard users.
+ * primary color, always underlined, with a thicker underline on hover and a
+ * focus ring for keyboard users.
  *
  * @example
  * ```tsx
