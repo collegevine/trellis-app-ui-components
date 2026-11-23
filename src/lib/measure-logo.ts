@@ -1,5 +1,6 @@
 import type { SchoolLogo } from "../components/app-frame.js"
-import { clearBackground, inkBounds, type MeasuredLogo } from "./logo.js"
+import type { FaviconLogo } from "./favicon.js"
+import { clearBackground, inkBounds, isRound } from "./logo.js"
 
 export interface Crop {
   x: number
@@ -8,7 +9,7 @@ export interface Crop {
   height: number
 }
 
-export interface LogoMeasurement extends MeasuredLogo {
+export interface LogoMeasurement extends FaviconLogo {
   crop: Crop
   cleanSrc: string | null
 }
@@ -21,7 +22,7 @@ function isSvg(src: string) {
   return /\.svg(?:[?#]|$)/i.test(src) || src.startsWith("data:image/svg")
 }
 
-function loadImage(src: string) {
+export function loadImage(src: string) {
   return new Promise<HTMLImageElement>((resolve, reject) => {
     const image = new Image()
     image.decoding = "async"
@@ -82,6 +83,7 @@ async function measure(logo: SchoolLogo): Promise<LogoMeasurement | null> {
     logo,
     ratio: inkWidth / inkHeight,
     tone: bounds.tone,
+    round: isRound(pixels, width, bounds),
     crop: {
       x: bounds.left / width,
       y: bounds.top / height,

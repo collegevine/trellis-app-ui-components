@@ -10,6 +10,8 @@ import {
   type BrandingStep,
   type FrameColors,
 } from "../lib/branding.js"
+import { drawFavicon } from "../lib/draw-favicon.js"
+import { faviconPlans, type FaviconPlan } from "../lib/favicon.js"
 import { pickLogo, type LogoSpace } from "../lib/logo.js"
 import { measureLogo, type LogoMeasurement } from "../lib/measure-logo.js"
 import { cn } from "../lib/utils.js"
@@ -121,6 +123,61 @@ function useLogoMeasurements(logos: SchoolLogo[]): Measurements | null {
   return measurements?.key === key ? measurements.value : null
 }
 
+function measuredLogos(logos: SchoolLogo[], measurements: Measurements) {
+  return logos.flatMap((logo) => {
+    const m = measurements.get(logo.src)
+    return m ? [m] : []
+  })
+}
+
+const DARK_MODE = "(prefers-color-scheme: dark)"
+
+function useDarkMode() {
+  const [dark, setDark] = useState(false)
+  useEffect(() => {
+    if (typeof window.matchMedia !== "function") return
+    const query = window.matchMedia(DARK_MODE)
+    const update = () => setDark(query.matches)
+    update()
+    query.addEventListener("change", update)
+    return () => query.removeEventListener("change", update)
+  }, [])
+  return dark
+}
+
+function planKey(plan: FaviconPlan<LogoMeasurement>) {
+  if (plan.kind === "logo") return `logo:${plan.logo.logo.src}:${plan.backing}`
+  if (plan.kind === "letter") return `letter:${plan.letter}:${plan.fill}:${plan.text}`
+  return "mark"
+}
+
+async function drawWithFallback(plan: FaviconPlan<LogoMeasurement>, school: FrameSchool | undefined) {
+  const href = await drawFavicon(plan)
+  if (href || plan.kind !== "logo" || !school) return href
+  return drawFavicon(faviconPlans<LogoMeasurement>(school, []).light)
+}
+
+function useFavicon(school: FrameSchool | undefined, measurements: Measurements | null): string | null {
+  const dark = useDarkMode()
+  const waiting = Boolean(school && school.logos.length > 0 && !measurements)
+  const versions = school && measurements ? measuredLogos(school.logos, measurements) : []
+  const plans = waiting ? null : faviconPlans(school, versions)
+  const plan = plans ? (dark ? plans.dark : plans.light) : null
+  const key = plan ? planKey(plan) : null
+  const [icon, setIcon] = useState<{ key: string; href: string | null } | null>(null)
+  useEffect(() => {
+    if (!plan || !key) return
+    let current = true
+    drawWithFallback(plan, school).then((href) => {
+      if (current) setIcon({ key, href })
+    })
+    return () => {
+      current = false
+    }
+  }, [key])
+  return icon?.key === key ? icon.href : null
+}
+
 function Logo({
   school,
   look,
@@ -132,12 +189,7 @@ function Logo({
   space: LogoSpace
   measurements: Measurements | null
 }) {
-  const measured = measurements
-    ? school.logos.flatMap((logo) => {
-        const m = measurements.get(logo.src)
-        return m ? [m] : []
-      })
-    : []
+  const measured = measurements ? measuredLogos(school.logos, measurements) : []
   const choice = pickLogo(measured, space, look)
   const fallback = school.logos[0]
   const logo = choice?.logo ?? fallback
@@ -274,6 +326,8 @@ export function AppFrame({
   const colors = school ? frameColors(school.main, step) : unbrandedFrameColors()
   const hasLogo = Boolean(school && school.logos.length > 0)
   const measurements = useLogoMeasurements(school?.logos ?? [])
+  const faviconHref = useFavicon(school, measurements)
+  const favicon = faviconHref ? <link rel="icon" href={faviconHref} /> : null
   const logoIn = (space: LogoSpace, look: FrameColors["logo"] = colors.logo) =>
     school ? <Logo school={school} look={look} space={space} measurements={measurements} /> : null
   const schoolName = school ? <span className="min-w-0 truncate text-sm font-semibold">{school.name}</span> : null
@@ -287,6 +341,7 @@ export function AppFrame({
         className="min-h-screen bg-(--frame-page) text-foreground"
         style={{ "--frame-page": school ? plainPageColor(school.main, step) : colors.page } as CSSProperties}
       >
+        {favicon}
         {school ? (
           <header className="flex h-14 items-center px-6">
             {identityIn(logoIn(ABOVE_PAGE, "original"))}
@@ -386,6 +441,7 @@ export function AppFrame({
         className="flex h-dvh flex-col overflow-hidden bg-(--frame) text-(--frame-foreground) md:flex-row"
       >
         {canvas}
+        {favicon}
         {mobileBar}
         <aside className="hidden w-60 shrink-0 flex-col overflow-y-auto md:flex">{sideNav}</aside>
         {page}
@@ -402,6 +458,7 @@ export function AppFrame({
       className="flex h-dvh flex-col overflow-hidden bg-(--frame) text-(--frame-foreground)"
     >
       {canvas}
+      {favicon}
       {mobileBar}
       <header className="hidden h-14 shrink-0 items-center gap-4 px-4 md:flex">
         {school ? identityIn(logoIn(TOP_EDGE)) : title}

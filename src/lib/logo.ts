@@ -110,6 +110,32 @@ export function inkBounds(
   return { left, top, right, bottom, background, tone }
 }
 
+const CORNER_SHARE = 0.12
+
+function isClear(pixels: Uint8ClampedArray, i: number, background: InkBounds["background"]) {
+  return channel(pixels, i + 3) <= CLEAR_ALPHA || (background !== null && distance(pixels, i, background) <= BACKGROUND_DISTANCE)
+}
+
+export function isRound(pixels: Uint8ClampedArray, width: number, bounds: InkBounds) {
+  const inkWidth = bounds.right - bounds.left + 1
+  const inkHeight = bounds.bottom - bounds.top + 1
+  const corner = Math.max(1, Math.round(CORNER_SHARE * Math.min(inkWidth, inkHeight)))
+  const corners: [number, number][] = [
+    [bounds.left, bounds.top],
+    [bounds.right - corner + 1, bounds.top],
+    [bounds.left, bounds.bottom - corner + 1],
+    [bounds.right - corner + 1, bounds.bottom - corner + 1],
+  ]
+  return corners.every(([left, top]) => {
+    for (let y = top; y < top + corner; y++) {
+      for (let x = left; x < left + corner; x++) {
+        if (!isClear(pixels, (y * width + x) * 4, bounds.background)) return false
+      }
+    }
+    return true
+  })
+}
+
 export function logoSize(ratio: number, space: LogoSpace): LogoSize {
   const ideal = Math.sqrt(space.area / ratio)
   let height = Math.min(space.maxHeight, Math.max(space.minHeight, ideal))
