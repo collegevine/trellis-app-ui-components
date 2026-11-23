@@ -4,8 +4,8 @@ import { contrastRatio, fromOklch, normalizeHex, toOklch } from "./color.js"
 /**
  * A level on the branding scale, from least to most school color.
  *
- * - `low`: a very light gray frame around a white page. Selected controls
- *   and charts keep the neutral look.
+ * - `low`: a very light gray frame around a white page. The school color
+ *   appears in the logo. Selected controls and charts keep the neutral look.
  * - `medium`: a light frame in the hue of the main school color, around
  *   a white page. Every school gets the same lightness and the same small
  *   amount of color, and a main color close to gray, black or white gets a
@@ -13,8 +13,9 @@ import { contrastRatio, fromOklch, normalizeHex, toOklch } from "./color.js"
  *   stands out from the page (see {@link selectedFill}). Charts open with the
  *   school colors (see `chartColors`).
  * - `high`: the main school color as the frame, around a white
- *   page. Selected controls take the main school color when it stands out
- *   from the page, and charts open with the school colors.
+ *   page. The logo shows in white. Selected controls take the main school
+ *   color when it stands out from the page, and charts open with the school
+ *   colors.
  */
 export type BrandingStep = "low" | "medium" | "high"
 
@@ -89,8 +90,8 @@ export interface Fill {
 /**
  * The fill for selected controls: a checked checkbox or radio button, a switch
  * that is on, the filled part of a slider, the current page number in a table,
- * the selected day in a date picker. Tabs, segmented controls and filters keep
- * the neutral look.
+ * the selected day in a date picker. For the selected tab, see `Tabs`.
+ * Segmented controls and filters keep the neutral look.
  *
  * The fill is the main school color. A selected control must stand out from
  * the white page, so when the main color has less than 3:1 contrast with
@@ -167,8 +168,11 @@ export interface FrameColors {
   navSelected: string
   navSelectedText: string
   navHover: string
+  logo: "original" | "white" | "black"
 }
 
+
+const NEUTRAL_PAGE = HUELESS_NEUTRALS["--background"]
 
 const LIGHT_GRAY_FRAME = HUELESS_NEUTRALS["--muted"]
 
@@ -180,6 +184,10 @@ const WARM_NEUTRAL_HUE = 97
 function isYellowHue(hue: number): boolean {
   return hue >= 105 && hue < 125
 }
+
+const PLAIN_PAGE_TINT_LIGHTNESS = 0.98
+const YELLOW_PLAIN_PAGE_TINT_LIGHTNESS = 0.9885
+const PLAIN_PAGE_TINT_STRENGTH = 0.0138
 
 function schoolHue(mainColor: string): number {
   return isNeutral(mainColor) ? WARM_NEUTRAL_HUE : toOklch(mainColor).h
@@ -221,6 +229,7 @@ export function frameColors(color: string, step: BrandingStep): FrameColors {
       navSelected: tint(mainColor, 8),
       navSelectedText: DARK_TEXT,
       navHover: `color-mix(in srgb, ${frameText} 14%, transparent)`,
+      logo: frameText === LIGHT_TEXT ? "white" : "black",
     }
   }
   if (step === "medium") {
@@ -229,6 +238,7 @@ export function frameColors(color: string, step: BrandingStep): FrameColors {
       frameText: DARK_TEXT,
       page: PAGE,
       navSelectedText: DARK_TEXT,
+      logo: "original",
     }
   }
   return {
@@ -238,9 +248,17 @@ export function frameColors(color: string, step: BrandingStep): FrameColors {
     navSelected: darken(LIGHT_GRAY_FRAME, 8),
     navSelectedText: DARK_TEXT,
     navHover: darken(LIGHT_GRAY_FRAME, 4),
+    logo: "original",
   }
 }
 
+export function plainPageColor(color: string, step: BrandingStep): string {
+  if (step === "low") return PAGE
+  if (step === "medium") return NEUTRAL_PAGE
+  const hue = schoolHue(normalizeHex(color))
+  const lightness = isYellowHue(hue) ? YELLOW_PLAIN_PAGE_TINT_LIGHTNESS : PLAIN_PAGE_TINT_LIGHTNESS
+  return fromOklch({ l: lightness, c: PLAIN_PAGE_TINT_STRENGTH, h: hue })
+}
 
 /**
  * The colors of the app frame for an app with no school brand. They come from
@@ -255,5 +273,6 @@ export function unbrandedFrameColors(): FrameColors {
     navSelected: `color-mix(in oklab, ${frame}, var(--foreground) 8%)`,
     navSelectedText: "var(--foreground)",
     navHover: `color-mix(in oklab, ${frame}, var(--foreground) 4%)`,
+    logo: "original",
   }
 }

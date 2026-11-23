@@ -5,28 +5,64 @@ import { NavLink, useLocation, type NavLinkProps } from "react-router"
 
 import {
   frameColors,
+  plainPageColor,
   unbrandedFrameColors,
   type BrandingStep,
+  type FrameColors,
 } from "../lib/branding.js"
+import { pickLogo, type LogoSpace } from "../lib/logo.js"
+import { measureLogo, type LogoMeasurement } from "../lib/measure-logo.js"
 import { cn } from "../lib/utils.js"
+
+/** One version of a school logo, such as the one-line logo, the stacked logo or the white logo. */
+export interface SchoolLogo {
+  /** The address of the image. */
+  src: string
+  /**
+   * True when the image already shows the school's name, as a wordmark does.
+   * The frame then leaves out the name next to the logo.
+   */
+  showsName?: boolean
+}
 
 /** The school whose brand the frame shows. */
 export interface FrameSchool {
-  /** The school's name, shown in the top edge of the frame. */
+  /** The school's name, used next to the logo, in the logo's text alternative, and in place of the logo when the school has none. */
   name: string
   /** The main school color, as a hex value. */
   main: string
+  /**
+   * Every version of the school logo that the app has, in any order. The frame
+   * removes the empty space around each logo and sizes each one so that a wide
+   * logo and a compact logo cover about the same area. In each place, it shows
+   * the widest version that is still large enough to read, so a one-line logo
+   * gives way to a stacked logo where space is short. The full-color frame
+   * shows a white version, or turns another version white when there is none.
+   */
+  logos: SchoolLogo[]
 }
 
 /**
  * Where the frame puts the nav.
  *
  * - `top`: the app name and the nav sit in the top edge of the frame, next to
- *   the school name. Without a school, the app name starts the top edge.
- * - `left`: the nav runs down the left side of the frame, under the school
- *   name and the app name.
+ *   the logo. Without a school, the app name starts the top edge.
+ * - `left`: the nav runs down the left side of the frame, under the logo and
+ *   the app name.
+ * - `plain`: no frame. The logo sits above the page. With a school brand, the
+ *   page is white at the `low` level, a light gray at the
+ *   `medium` level, and a very light tint in the hue of the main school
+ *   color at the `high` level. Use the plain layout on a page where a user
+ *   fills out a form and sees nothing else of the app. The frame is for
+ *   school staff who work in the app. On a page that both non-staff and
+ *   school staff use (non-staff fill out the form, and staff view, edit or
+ *   manage it), pick the layout for each viewer when the page loads: a
+ *   signed-in member of the school staff sees the frame, and every other
+ *   viewer sees the plain layout. A form page that anyone with the link can
+ *   open has no sign-in, so it cannot tell staff from non-staff, and every
+ *   viewer sees the plain layout there.
  */
-export type AppFrameLayout = "top" | "left"
+export type AppFrameLayout = "top" | "left" | "plain"
 
 /** The school brand for {@link AppFrame}, or none. */
 export type AppFrameBrand =
@@ -39,7 +75,7 @@ export type AppFrameBrand =
   | {
       /**
        * No school brand. The frame takes the CollegeVine look, and the app
-       * name sits where the school name goes. With no nav, there is no frame.
+       * name sits where the logo goes. With no nav, there is no frame.
        */
       school?: undefined
       step?: undefined
@@ -59,16 +95,111 @@ export type AppFrameProps = AppFrameBrand & {
   className?: string
 }
 
-function SchoolName({ school }: { school: FrameSchool }) {
-  return <span className="min-w-0 truncate text-sm font-semibold">{school.name}</span>
+const WHITE_LOGO = "brightness(0) invert(1)"
+const BLACK_LOGO = "brightness(0)"
+
+const TOP_EDGE: LogoSpace = { area: 3920, minHeight: 16, maxHeight: 32, maxWidth: 280 }
+const LEFT_NAV: LogoSpace = { area: 3920, minHeight: 16, maxHeight: 32, maxWidth: 192 }
+const PHONE_BAR: LogoSpace = { area: 3920, minHeight: 16, maxHeight: 32, maxWidth: 220 }
+const ABOVE_PAGE: LogoSpace = { area: 5120, minHeight: 18, maxHeight: 44, maxWidth: 320 }
+
+type Measurements = Map<string, LogoMeasurement | null>
+
+function useLogoMeasurements(logos: SchoolLogo[]): Measurements | null {
+  const key = logos.map((logo) => logo.src).join("\n")
+  const [measurements, setMeasurements] = useState<{ key: string; value: Measurements } | null>(null)
+  useEffect(() => {
+    let current = true
+    Promise.all(logos.map((logo) => measureLogo(logo))).then((results) => {
+      if (!current) return
+      setMeasurements({ key, value: new Map(logos.map((logo, i) => [logo.src, results[i] ?? null])) })
+    })
+    return () => {
+      current = false
+    }
+  }, [key])
+  return measurements?.key === key ? measurements.value : null
+}
+
+function Logo({
+  school,
+  look,
+  space,
+  measurements,
+}: {
+  school: FrameSchool
+  look: FrameColors["logo"]
+  space: LogoSpace
+  measurements: Measurements | null
+}) {
+  const measured = measurements
+    ? school.logos.flatMap((logo) => {
+        const m = measurements.get(logo.src)
+        return m ? [m] : []
+      })
+    : []
+  const choice = pickLogo(measured, space, look)
+  const fallback = school.logos[0]
+  const logo = choice?.logo ?? fallback
+  if (!logo) return null
+  const recolor = choice ? choice.recolor : look !== "original"
+  const filter = recolor ? (look === "white" ? WHITE_LOGO : BLACK_LOGO) : undefined
+  const name = logo.showsName ? null : <span className="truncate text-sm font-semibold">{school.name}</span>
+  if (!choice) {
+    return (
+      <span className="flex min-w-0 items-center gap-2.5">
+        <img
+          data-slot="app-frame-logo"
+          src={logo.src}
+          alt={`${school.name} logo`}
+          className="h-7 w-auto shrink-0"
+          style={{ filter, visibility: measurements ? undefined : "hidden" }}
+        />
+        {name}
+      </span>
+    )
+  }
+  const { width, height } = choice.size
+  const { crop, cleanSrc } = choice.measured
+  const image = cleanSrc ? (
+    <img
+      data-slot="app-frame-logo"
+      src={cleanSrc}
+      alt={`${school.name} logo`}
+      className="block shrink-0"
+      style={{ width, height, filter }}
+    />
+  ) : (
+    <span className="relative block shrink-0 overflow-hidden" style={{ width, height }}>
+      <img
+        data-slot="app-frame-logo"
+        src={logo.src}
+        alt={`${school.name} logo`}
+        className="absolute max-w-none"
+        style={{
+          width: width / crop.width,
+          height: height / crop.height,
+          left: -(crop.x * width) / crop.width,
+          top: -(crop.y * height) / crop.height,
+          filter,
+        }}
+      />
+    </span>
+  )
+  return (
+    <span className="flex min-w-0 items-center gap-2.5">
+      {image}
+      {name}
+    </span>
+  )
 }
 
 /**
  * The frame around an app. It wraps the page on all four sides, holds the
- * app's nav, and shows the school name in its top edge.
+ * app's nav, and shows the school logo in its top edge.
  *
  * Without a `school`, the frame takes the CollegeVine look, and the app name
- * sits where the school name goes. An app with no school and no nav gets no frame.
+ * sits where the logo goes. An app with no school and no nav gets no frame.
  *
  * Only the page scrolls, and the frame stays in place. The bottom edge of the
  * frame comes into view when the user scrolls to the end of the page. Where the
@@ -87,7 +218,8 @@ function SchoolName({ school }: { school: FrameSchool }) {
  * - `low`: a very light gray frame around a white page.
  * - `medium`: a light frame in the hue of the main school color, around
  *   a white page.
- * - `high`: the main school color around a white page.
+ * - `high`: the main school color around a white page, with
+ *   the logo in white.
  *
  * The selected nav item takes its fill from the frame, so it shows on every
  * frame. Put the values from `schoolTheme` on the `<html>` element too, for
@@ -96,7 +228,7 @@ function SchoolName({ school }: { school: FrameSchool }) {
  * @example
  * ```tsx
  * <AppFrame
- *   school={{ name: "Northfield University", main: brand.main }}
+ *   school={{ name: "Monza University", main: brand.main, logos: brand.logos }}
  *   step={defaultBrandingStep("staff")}
  *   appName="Admissions dashboard"
  *   nav={
@@ -139,15 +271,31 @@ export function AppFrame({
     return () => observer.disconnect()
   }, [layout])
 
-  if (!school && !nav) {
+  const colors = school ? frameColors(school.main, step) : unbrandedFrameColors()
+  const hasLogo = Boolean(school && school.logos.length > 0)
+  const measurements = useLogoMeasurements(school?.logos ?? [])
+  const logoIn = (space: LogoSpace, look: FrameColors["logo"] = colors.logo) =>
+    school ? <Logo school={school} look={look} space={space} measurements={measurements} /> : null
+  const schoolName = school ? <span className="min-w-0 truncate text-sm font-semibold">{school.name}</span> : null
+  const identityIn = (logo: ReactNode) => (hasLogo ? logo : schoolName)
+
+  if (layout === "plain" || (!school && !nav)) {
     return (
-      <div data-slot="app-frame" data-layout="plain" className="min-h-screen bg-background text-foreground">
+      <div
+        data-slot="app-frame"
+        data-layout="plain"
+        className="min-h-screen bg-(--frame-page) text-foreground"
+        style={{ "--frame-page": school ? plainPageColor(school.main, step) : colors.page } as CSSProperties}
+      >
+        {school ? (
+          <header className="flex h-14 items-center px-6">
+            {identityIn(logoIn(ABOVE_PAGE, "original"))}
+          </header>
+        ) : null}
         <main className={className}>{children}</main>
       </div>
     )
   }
-
-  const colors = school ? frameColors(school.main, step) : unbrandedFrameColors()
 
   const vars = {
     "--frame": colors.frame,
@@ -158,13 +306,12 @@ export function AppFrame({
     "--frame-nav-hover": colors.navHover,
   } as CSSProperties
   const title = appName ? <span className="shrink-0 text-sm font-semibold">{appName}</span> : null
-  const identity = school ? <SchoolName school={school} /> : title
   const canvas = (
     <style>{`html{background-color:${colors.frame};scrollbar-gutter:auto}body{background-color:transparent}`}</style>
   )
   const sideNav = (
     <>
-      <div className="flex h-14 shrink-0 items-center px-6">{identity}</div>
+      <div className="flex h-14 shrink-0 items-center px-6">{school ? identityIn(logoIn(LEFT_NAV)) : title}</div>
       {school && appName ? <div className="px-6 pt-2 pb-2 text-sm font-semibold">{appName}</div> : null}
       {nav ? (
         <nav data-slot="app-frame-nav" className="flex flex-col gap-0.5 px-3 pb-3">
@@ -198,7 +345,7 @@ export function AppFrame({
           </Drawer.Portal>
         </Drawer.Root>
       ) : null}
-      <span className={cn("flex min-w-0 items-center", nav ? "" : "px-2")}>{identity}</span>
+      <span className={cn("flex min-w-0 items-center", nav ? "" : "px-2")}>{school ? identityIn(logoIn(PHONE_BAR)) : title}</span>
     </div>
   )
   const page = (
@@ -257,7 +404,7 @@ export function AppFrame({
       {canvas}
       {mobileBar}
       <header className="hidden h-14 shrink-0 items-center gap-4 px-4 md:flex">
-        {identity}
+        {school ? identityIn(logoIn(TOP_EDGE)) : title}
         {school && title ? (
           <>
             <span aria-hidden="true" className="h-5 w-px shrink-0 bg-current opacity-30" />
