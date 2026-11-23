@@ -8,11 +8,15 @@ import { AppFrame, AppFrameNavLink, type FrameSchool } from "./app-frame.js"
 const northfield: FrameSchool = {
   name: "Northfield University",
   main: "#003da5",
+  logos: [{ src: "/logos/northfield.svg" }, { src: "/logos/northfield-white.svg" }],
 }
+
+const noLogo: FrameSchool = { name: "Monza University", main: "#7a1f2b", logos: [] }
 
 const redmond: FrameSchool = {
   name: "Redmond State University",
   main: "#c41230",
+  logos: [{ src: "/logos/redmond.svg", showsName: true }],
 }
 
 function render(element: React.ReactElement, path = "/") {
@@ -28,7 +32,28 @@ const nav = (
   </>
 )
 
+function logoTag(html: string) {
+  return html.match(/<img [^>]*data-slot="app-frame-logo"[^>]*>/)?.[0] ?? ""
+}
+
 describe("AppFrame", () => {
+  it("leaves out the logo spot and its divider when the school has no logo", () => {
+    const top = render(
+      <AppFrame school={noLogo} step="medium" appName="Deposit holds" nav={nav}>
+        <p>Page</p>
+      </AppFrame>
+    )
+    const header = top.match(/<header[\s\S]*<\/header>/)?.[0] ?? ""
+    expect(header).toMatch(/^<header[^>]*><span[^>]*>Deposit holds<\/span>/)
+    expect(header).not.toContain("w-px")
+    const plain = render(
+      <AppFrame school={noLogo} step="medium" layout="plain">
+        <p>Form</p>
+      </AppFrame>
+    )
+    expect(plain).not.toContain("<header")
+  })
+
   it("keeps positioned content inside the page, so that it cannot make the window scroll past the frame", () => {
     const html = render(
       <AppFrame appName="Admissions dashboard" nav={nav}>
@@ -40,14 +65,14 @@ describe("AppFrame", () => {
     expect(page).toContain("overflow-clip")
   })
 
-  it("puts the school name, the app name and the nav in the top edge of the frame", () => {
+  it("puts the logo, the app name and the nav in the top edge of the frame", () => {
     const html = render(
       <AppFrame school={northfield} step="medium" appName="Admissions dashboard" nav={nav}>
         <p>Page</p>
       </AppFrame>
     )
     const header = html.match(/<header[\s\S]*<\/header>/)?.[0] ?? ""
-    expect(header).toContain(">Northfield University<")
+    expect(header).toContain("northfield.svg")
     expect(header).toContain("Admissions dashboard")
     expect(header).toContain("By college")
     expect(html).toMatch(/<main[^>]*>.*<p>Page<\/p>.*<\/main>/)
@@ -58,7 +83,7 @@ describe("AppFrame", () => {
       <AppFrame school={northfield} step="medium" layout="left" appName="Admissions dashboard" nav={nav} />
     )
     const aside = html.match(/<aside[\s\S]*<\/aside>/)?.[0] ?? ""
-    expect(aside).toContain(">Northfield University<")
+    expect(aside).toContain("northfield.svg")
     expect(aside).toContain("By college")
     expect(html).not.toContain("<header")
   })
@@ -81,7 +106,26 @@ describe("AppFrame", () => {
     expect(render(<AppFrame school={redmond} step="high" layout="plain" />)).not.toContain("<style>")
   })
 
-  it("draws no frame in the plain layout and puts the school name above the page", () => {
+  it("turns the logo white on the full-color frame", () => {
+    const html = render(<AppFrame school={redmond} step="high" />)
+    expect(logoTag(html)).toContain("redmond.svg")
+    expect(logoTag(html)).toContain("filter:brightness(0) invert(1)")
+  })
+
+  it.each(["medium", "low"] as const)(
+    "shows the full-color logo unchanged at the %s step",
+    (step) => {
+      const html = render(<AppFrame school={northfield} step={step} />)
+      expect(logoTag(html)).toContain("northfield.svg")
+      expect(logoTag(html)).not.toContain("filter")
+    }
+  )
+
+  it("leaves out the school name next to a wordmark", () => {
+    expect(render(<AppFrame school={redmond} step="low" />)).not.toContain(">Redmond State University<")
+  })
+
+  it("draws no frame in the plain layout and puts the logo above the page", () => {
     const html = render(
       <AppFrame school={northfield} step="high" layout="plain" appName="Apply" nav={nav}>
         <p>Form</p>
@@ -89,8 +133,8 @@ describe("AppFrame", () => {
     )
     expect(html).not.toContain("--frame:")
     expect(html).not.toContain("By college")
-    expect(html).toContain(">Northfield University<")
-    expect(html.indexOf("Northfield University")).toBeLessThan(html.indexOf("<p>Form</p>"))
+    expect(logoTag(html)).toContain("northfield.svg")
+    expect(html.indexOf("northfield.svg")).toBeLessThan(html.indexOf("<p>Form</p>"))
   })
 
   it("puts the form on a white page in the plain layout at the low level", () => {
@@ -135,7 +179,7 @@ describe("AppFrame with no school brand", () => {
     expect(html).toContain('data-step="unbranded"')
   })
 
-  it("puts the app name where the school name goes in the top edge, with no divider", () => {
+  it("puts the app name where the logo goes in the top edge, with no divider", () => {
     const html = render(<AppFrame appName="Admissions dashboard" nav={nav} />)
     const header = html.match(/<header[\s\S]*<\/header>/)?.[0] ?? ""
     expect(header).toMatch(/^<header[^>]*><span[^>]*>Admissions dashboard<\/span>/)
