@@ -37,21 +37,23 @@ function logoTag(html: string) {
 }
 
 describe("AppFrame", () => {
-  it("leaves out the logo spot and its divider when the school has no logo", () => {
+  it("shows the school name where the logo goes when the school has no logo", () => {
     const top = render(
       <AppFrame school={noLogo} step="medium" appName="Deposit holds" nav={nav}>
         <p>Page</p>
       </AppFrame>
     )
     const header = top.match(/<header[\s\S]*<\/header>/)?.[0] ?? ""
-    expect(header).toMatch(/^<header[^>]*><span[^>]*>Deposit holds<\/span>/)
-    expect(header).not.toContain("w-px")
+    expect(header).toMatch(/^<header[^>]*><span[^>]*>Monza University<\/span>/)
+    expect(header).toContain("w-px")
+    expect(header).toContain("Deposit holds")
     const plain = render(
       <AppFrame school={noLogo} step="medium" layout="plain">
         <p>Form</p>
       </AppFrame>
     )
-    expect(plain).not.toContain("<header")
+    expect(plain).toContain(">Monza University<")
+    expect(plain.indexOf("Monza University")).toBeLessThan(plain.indexOf("<p>Form</p>"))
   })
 
   it("keeps positioned content inside the page, so that it cannot make the window scroll past the frame", () => {

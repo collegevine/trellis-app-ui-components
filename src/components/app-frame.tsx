@@ -27,7 +27,7 @@ export interface SchoolLogo {
 
 /** The school whose brand the frame shows. */
 export interface FrameSchool {
-  /** The school's name, used next to the logo and in the logo's text alternative. */
+  /** The school's name, used next to the logo, in the logo's text alternative, and in place of the logo when the school has none. */
   name: string
   /** The main school color, as a hex value. */
   main: string
@@ -255,6 +255,8 @@ export function AppFrame({
   const measurements = useLogoMeasurements(school?.logos ?? [])
   const logoIn = (space: LogoSpace, look: FrameColors["logo"] = colors.logo) =>
     school ? <Logo school={school} look={look} space={space} measurements={measurements} /> : null
+  const schoolName = school ? <span className="min-w-0 truncate text-sm font-semibold">{school.name}</span> : null
+  const identityIn = (logo: ReactNode) => (hasLogo ? logo : schoolName)
 
   if (layout === "plain" || (!school && !nav)) {
     return (
@@ -264,9 +266,9 @@ export function AppFrame({
         className="min-h-screen bg-(--frame-page) text-foreground"
         style={{ "--frame-page": school ? plainPageColor(school.main, step) : colors.page } as CSSProperties}
       >
-        {hasLogo ? (
+        {school ? (
           <header className="flex h-14 items-center px-6">
-            {logoIn(ABOVE_PAGE, "original")}
+            {identityIn(logoIn(ABOVE_PAGE, "original"))}
           </header>
         ) : null}
         <main className={className}>{children}</main>
@@ -288,8 +290,8 @@ export function AppFrame({
   )
   const sideNav = (
     <>
-      <div className="flex h-14 shrink-0 items-center px-6">{hasLogo ? logoIn(LEFT_NAV) : title}</div>
-      {hasLogo && appName ? <div className="px-6 pt-2 pb-2 text-sm font-semibold">{appName}</div> : null}
+      <div className="flex h-14 shrink-0 items-center px-6">{school ? identityIn(logoIn(LEFT_NAV)) : title}</div>
+      {school && appName ? <div className="px-6 pt-2 pb-2 text-sm font-semibold">{appName}</div> : null}
       {nav ? (
         <nav data-slot="app-frame-nav" className="flex flex-col gap-0.5 px-3 pb-3">
           {nav}
@@ -322,7 +324,7 @@ export function AppFrame({
           </Drawer.Portal>
         </Drawer.Root>
       ) : null}
-      <span className={cn("flex min-w-0 items-center", nav ? "" : "px-2")}>{hasLogo ? logoIn(PHONE_BAR) : title}</span>
+      <span className={cn("flex min-w-0 items-center", nav ? "" : "px-2")}>{school ? identityIn(logoIn(PHONE_BAR)) : title}</span>
     </div>
   )
   const page = (
@@ -381,8 +383,8 @@ export function AppFrame({
       {canvas}
       {mobileBar}
       <header className="hidden h-14 shrink-0 items-center gap-4 px-4 md:flex">
-        {hasLogo ? logoIn(TOP_EDGE) : title}
-        {hasLogo && title ? (
+        {school ? identityIn(logoIn(TOP_EDGE)) : title}
+        {school && title ? (
           <>
             <span aria-hidden="true" className="h-5 w-px shrink-0 bg-current opacity-30" />
             {title}
