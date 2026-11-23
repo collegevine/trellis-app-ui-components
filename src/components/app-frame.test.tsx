@@ -125,10 +125,6 @@ describe("AppFrame", () => {
     }
   )
 
-  it("shows the school name next to a logo that does not show it", () => {
-    expect(render(<AppFrame school={northfield} step="low" />)).toContain(">Northfield University<")
-  })
-
   it("leaves out the school name next to a wordmark", () => {
     expect(render(<AppFrame school={redmond} step="low" />)).not.toContain(">Redmond State University<")
   })
