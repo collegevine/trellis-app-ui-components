@@ -22,7 +22,7 @@ function renderApp() {
       path: "/",
       element: (
         <AppFrame
-          school={{ name: "Northfield University", main: "#003da5" }}
+          school={{ name: "Northfield University", main: "#003da5", logos: [{ src: "/logo.svg" }] }}
           step="medium"
         >
           <Outlet />
