@@ -98,9 +98,9 @@ export type AppFrameProps = AppFrameBrand & {
 const WHITE_LOGO = "brightness(0) invert(1)"
 const BLACK_LOGO = "brightness(0)"
 
-const TOP_EDGE: LogoSpace = { area: 3920, minHeight: 16, maxHeight: 36, maxWidth: 280 }
-const LEFT_NAV: LogoSpace = { area: 3920, minHeight: 16, maxHeight: 36, maxWidth: 192 }
-const PHONE_BAR: LogoSpace = { area: 3920, minHeight: 16, maxHeight: 36, maxWidth: 220 }
+const TOP_EDGE: LogoSpace = { area: 3920, minHeight: 16, maxHeight: 32, maxWidth: 280 }
+const LEFT_NAV: LogoSpace = { area: 3920, minHeight: 16, maxHeight: 32, maxWidth: 192 }
+const PHONE_BAR: LogoSpace = { area: 3920, minHeight: 16, maxHeight: 32, maxWidth: 220 }
 const ABOVE_PAGE: LogoSpace = { area: 5120, minHeight: 18, maxHeight: 44, maxWidth: 320 }
 
 type Measurements = Map<string, LogoMeasurement | null>
