@@ -228,7 +228,7 @@ function Logo({
  * @example
  * ```tsx
  * <AppFrame
- *   school={{ name: "Northfield University", main: brand.main, logos: brand.logos }}
+ *   school={{ name: "Monza University", main: brand.main, logos: brand.logos }}
  *   step={defaultBrandingStep("staff")}
  *   appName="Admissions dashboard"
  *   nav={
