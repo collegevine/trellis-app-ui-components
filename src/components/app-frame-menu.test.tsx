@@ -19,21 +19,25 @@ afterEach(() => {
   document.body.innerHTML = ""
 })
 
-function renderApp(layout: AppFrameLayout) {
+function renderApp(layout: AppFrameLayout, withNav = true) {
   const router = createMemoryRouter([
     {
       path: "/",
       element: (
         <AppFrame
+          school={{ name: "Northfield University", primaryColor: "#003da5" }}
+          step="medium"
           layout={layout}
           appName="Admissions dashboard"
           nav={
-            <>
-              <AppFrameNavLink to="/" end>
-                Overview
-              </AppFrameNavLink>
-              <AppFrameNavLink to="/by-college">By college</AppFrameNavLink>
-            </>
+            withNav ? (
+              <>
+                <AppFrameNavLink to="/" end>
+                  Overview
+                </AppFrameNavLink>
+                <AppFrameNavLink to="/by-college">By college</AppFrameNavLink>
+              </>
+            ) : undefined
           }
         >
           <Outlet />
@@ -85,5 +89,10 @@ describe("AppFrame on a phone", () => {
     expect(container.textContent).toContain("By college page")
     await act(async () => new Promise((resolve) => setTimeout(resolve, 50)))
     expect(menu()).toBeNull()
+  })
+
+  it("shows no menu button when the app has no nav", () => {
+    renderApp("top", false)
+    expect(menuButton()).toBeNull()
   })
 })

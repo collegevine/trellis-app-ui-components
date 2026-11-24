@@ -1,16 +1,41 @@
 import { describe, expect, it } from "vitest"
 
 import {
+  type AppAudience,
+  BRANDING_STEPS,
+  defaultBrandingStep,
+  frameColors,
   readableText,
   schoolTheme,
   selectedFill,
 } from "./branding.js"
-import { contrastRatio } from "./color.js"
+import { contrastRatio, type Oklch, toOklch } from "./color.js"
+
+describe("defaultBrandingStep", () => {
+  it("starts an app for non-staff at the tinted frame", () => {
+    expect(defaultBrandingStep("non-staff")).toBe("medium")
+  })
+
+  it("starts an app for staff at the neutral frame", () => {
+    expect(defaultBrandingStep("staff")).toBe("low")
+  })
+
+  it("rejects a school color in place of an audience", () => {
+    expect(() => defaultBrandingStep("#003da5" as AppAudience)).toThrow(/"non-staff" or "staff"/)
+  })
+})
 
 describe("color values in the output", () => {
   it("writes every school color as a six-digit hex value that CSS accepts", () => {
-    expect(schoolTheme({ primaryColor: "F00" })["--school-selected"]).toBe("#ff0000")
-    expect(schoolTheme({ primaryColor: "F00" })["--school-main"]).toBe("#ff0000")
+    expect(frameColors("F00", "high").frame).toBe("#ff0000")
+    expect(schoolTheme({ primaryColor: "F00" }, "medium")["--school-selected"]).toBe("#ff0000")
+    expect(schoolTheme({ primaryColor: "F00" }, "medium")["--school-main"]).toBe("#ff0000")
+  })
+})
+
+describe("BRANDING_STEPS", () => {
+  it("orders the steps from least to most school color", () => {
+    expect(BRANDING_STEPS).toEqual(["low", "medium", "high"])
   })
 })
 
@@ -47,21 +72,32 @@ describe("selectedFill", () => {
 
 describe("schoolTheme", () => {
   it("sets the primary color, its text and the selected fill", () => {
-    const theme = schoolTheme({ primaryColor: "#003da5" })
+    const theme = schoolTheme({ primaryColor: "#003da5" }, "medium")
     expect(theme["--school-main"]).toBe("#003da5")
     expect(theme["--school-main-foreground"]).toBe("#ffffff")
     expect(theme["--school-selected"]).toBe("#003da5")
     expect(theme["--school-selected-foreground"]).toBe("#ffffff")
   })
 
+  it("leaves out the selected fill at the low level", () => {
+    const theme = schoolTheme({ primaryColor: "#003da5" }, "low")
+    expect(theme).not.toHaveProperty("--school-selected")
+    expect(theme).not.toHaveProperty("--school-selected-foreground")
+    expect(theme["--school-main"]).toBe("#003da5")
+  })
+
+  it("sets the selected fill at the high level", () => {
+    expect(schoolTheme({ primaryColor: "#003da5" }, "high")["--school-selected"]).toBe("#003da5")
+  })
+
   it("leaves out the selected fill when selected controls stay neutral", () => {
-    const theme = schoolTheme({ primaryColor: "#ffffff" })
+    const theme = schoolTheme({ primaryColor: "#ffffff" }, "medium")
     expect(theme).not.toHaveProperty("--school-selected")
     expect(theme).not.toHaveProperty("--school-selected-foreground")
   })
 
   it("replaces the warm neutrals with neutrals that have no hue", () => {
-    const theme = schoolTheme({ primaryColor: "#003da5" })
+    const theme = schoolTheme({ primaryColor: "#003da5" }, "medium")
     for (const name of ["--background", "--muted", "--secondary", "--border", "--input"]) {
       const value = theme[name]
       expect(value, name).toMatch(/^#([0-9a-f]{2})\1\1$/)
@@ -69,9 +105,113 @@ describe("schoolTheme", () => {
   })
 
   it("leaves buttons, the error red, the focus outline and the radius alone", () => {
-    const theme = schoolTheme({ primaryColor: "#c41230" })
+    const theme = schoolTheme({ primaryColor: "#c41230" }, "medium")
     for (const name of ["--primary", "--primary-foreground", "--destructive", "--ring", "--radius"]) {
       expect(theme).not.toHaveProperty(name)
+    }
+  })
+})
+
+describe("frameColors", () => {
+  it("draws the full-color frame in the primary color, around a white page", () => {
+    const colors = frameColors("#c41230", "high")
+    expect(colors.frame).toBe("#c41230")
+    expect(colors.frameText).toBe("#ffffff")
+    expect(colors.page).toBe("#ffffff")
+  })
+
+  it("fills the selected nav item in the full-color frame with a light tint and dark text", () => {
+    const colors = frameColors("#c41230", "high")
+    expect(colors.navSelected).toBe("color-mix(in srgb, #c41230 8%, #ffffff)")
+    expect(colors.navSelectedText).toBe("#111111")
+  })
+
+  it("puts dark text on a full-color frame in a light color", () => {
+    const colors = frameColors("#ffcd00", "high")
+    expect(colors.frameText).toBe("#111111")
+  })
+
+  it("draws a light gray frame with no school color around a white page at the low level", () => {
+    const colors = frameColors("#c41230", "low")
+    expect(colors.frame).toBe("#f5f5f5")
+    expect(colors.page).toBe("#ffffff")
+    expect(colors.frameText).toBe("#111111")
+    expect(JSON.stringify(colors)).not.toContain("#c41230")
+  })
+
+  it("fills the selected nav item at the low level with the frame darkened by 8%, and hover by 4%", () => {
+    const colors = frameColors("#003da5", "low")
+    expect(colors.navSelected).toBe("color-mix(in oklab, #f5f5f5, #000000 8%)")
+    expect(colors.navHover).toBe("color-mix(in oklab, #f5f5f5, #000000 4%)")
+  })
+})
+
+describe("frameColors at the tinted step", () => {
+  const schools = [
+    ["Northfield blue", "#003da5"],
+    ["Redmond red", "#c41230"],
+    ["Lakeshore pink", "#ed2b74"],
+    ["Harbor light blue", "#b9d9eb"],
+    ["Fairview light green", "#00b140"],
+    ["Ridgeline gold", "#ffcd00"],
+  ] as const
+
+  const hueGap = (first: number, second: number) => {
+    const gap = Math.abs(first - second) % 360
+    return Math.min(gap, 360 - gap)
+  }
+
+  it.each(schools.filter(([name]) => name !== "Ridgeline gold"))("draws the frame for %s in the hue of the primary color", (_, main) => {
+    const frame = toOklch(frameColors(main, "medium").frame)
+    expect(hueGap(frame.h, toOklch(main).h)).toBeLessThan(6)
+  })
+
+  it("gives every school the same frame lightness and amount of color", () => {
+    const frames = schools.map(([, main]) => toOklch(frameColors(main, "medium").frame))
+    for (const frame of frames) {
+      expect(frame.l).toBeCloseTo(frames[0]!.l, 2)
+      expect(frame.c).toBeGreaterThan(0.014)
+      expect(frame.c).toBeLessThan(0.022)
+    }
+  })
+
+  it("draws a lighter frame for a yellow hue", () => {
+    const yellow = toOklch(frameColors("#c9c400", "medium").frame)
+    const blue = toOklch(frameColors("#003da5", "medium").frame)
+    expect(yellow.l).toBeGreaterThan(blue.l + 0.01)
+  })
+
+  it.each([
+    ["dark gray", "#333333"],
+    ["black", "#000000"],
+    ["white", "#ffffff"],
+  ])("draws the light gray frame of the low level for a %s primary color", (_, main) => {
+    expect(frameColors(main, "medium")).toEqual(frameColors(main, "low"))
+  })
+
+  it.each(schools)(
+    "makes the hover and selected nav fills for %s darker steps of the frame with more color, not a mix with black",
+    (_, main) => {
+      const colors = frameColors(main, "medium")
+      const [frame, hover, selected] = [colors.frame, colors.navHover, colors.navSelected].map(toOklch) as [
+        Oklch,
+        Oklch,
+        Oklch,
+      ]
+      expect(hover.l).toBeLessThan(frame.l)
+      expect(selected.l).toBeLessThan(hover.l)
+      expect(selected.c).toBeGreaterThan(frame.c)
+      expect(hueGap(selected.h, frame.h)).toBeLessThan(6)
+      expect(colors.navSelected).not.toContain("#000000")
+    }
+  )
+
+  it("keeps the white page, and readable dark text on the frame and the selected nav fill", () => {
+    for (const [, main] of schools) {
+      const colors = frameColors(main, "medium")
+      expect(colors.page).toBe("#ffffff")
+      expect(contrastRatio(colors.frame, colors.frameText)).toBeGreaterThanOrEqual(4.5)
+      expect(contrastRatio(colors.navSelected, colors.navSelectedText)).toBeGreaterThanOrEqual(4.5)
     }
   })
 })

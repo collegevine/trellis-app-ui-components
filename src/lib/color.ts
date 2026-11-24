@@ -49,6 +49,31 @@ export function toOklch(color: string): Oklch {
   return { l, c: Math.hypot(a, b), h: (hue + 360) % 360 }
 }
 
+function fromLinear(value: number): number {
+  const clamped = Math.min(1, Math.max(0, value))
+  const encoded =
+    clamped <= 0.0031308 ? clamped * 12.92 : 1.055 * clamped ** (1 / 2.4) - 0.055
+  return Math.round(encoded * 255)
+}
+
+function linearFromOklch({ l, c, h }: Oklch): [number, number, number] {
+  const radians = (h * Math.PI) / 180
+  const a = c * Math.cos(radians)
+  const b = c * Math.sin(radians)
+  const long = (l + 0.3963377774 * a + 0.2158037573 * b) ** 3
+  const medium = (l - 0.1055613458 * a - 0.0638541728 * b) ** 3
+  const short = (l - 0.0894841775 * a - 1.291485548 * b) ** 3
+  return [
+    4.0767416621 * long - 3.3077115913 * medium + 0.2309699292 * short,
+    -1.2684380046 * long + 2.6097574011 * medium - 0.3413193965 * short,
+    -0.0041960863 * long - 0.7034186147 * medium + 1.707614701 * short,
+  ]
+}
+
+export function fromOklch(color: Oklch): string {
+  return `#${linearFromOklch(color).map((channel) => fromLinear(channel).toString(16).padStart(2, "0")).join("")}`
+}
+
 function luminance(color: string): number {
   const [r, g, b] = parseHex(color).map(toLinear) as [number, number, number]
   return 0.2126 * r + 0.7152 * g + 0.0722 * b

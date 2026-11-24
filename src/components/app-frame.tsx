@@ -3,24 +3,55 @@ import { List } from "@phosphor-icons/react"
 import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react"
 import { NavLink, useLocation, type NavLinkProps } from "react-router"
 
-import { unbrandedFrameColors } from "../lib/branding.js"
+import {
+  frameColors,
+  unbrandedFrameColors,
+  type BrandingStep,
+} from "../lib/branding.js"
 import { cn } from "../lib/utils.js"
+
+/** The school whose brand the frame shows. */
+export interface FrameSchool {
+  /** The school's name, shown in the top edge of the frame. */
+  name: string
+  /** The school's primary color, as a hex value. */
+  primaryColor: string
+}
 
 /**
  * Where the frame puts the nav.
  *
- * - `top`: the app name and the nav sit in the top edge of the frame.
- * - `left`: the nav runs down the left side of the frame, under the app name.
+ * - `top`: the app name and the nav sit in the top edge of the frame, next to
+ *   the school name. Without a school, the app name starts the top edge.
+ * - `left`: the nav runs down the left side of the frame, under the school
+ *   name and the app name.
  */
 export type AppFrameLayout = "top" | "left"
 
+/** The school brand for {@link AppFrame}, or none. */
+export type AppFrameBrand =
+  | {
+      /** The school whose brand the frame shows. */
+      school: FrameSchool
+      /** The level on the branding scale. */
+      step: BrandingStep
+    }
+  | {
+      /**
+       * No school brand. The frame takes the CollegeVine look, and the app
+       * name sits where the school name goes. With no nav, there is no frame.
+       */
+      school?: undefined
+      step?: undefined
+    }
+
 /** Props for {@link AppFrame}. */
-export interface AppFrameProps {
+export type AppFrameProps = AppFrameBrand & {
   /** Where the frame puts the nav. Defaults to `top`. */
   layout?: AppFrameLayout
   /** The app's name, shown in the frame. */
   appName?: string
-  /** The nav, made of {@link AppFrameNavLink} elements. With no nav, there is no frame. */
+  /** The nav, made of {@link AppFrameNavLink} elements. */
   nav?: ReactNode
   /** The page. */
   children?: ReactNode
@@ -28,10 +59,16 @@ export interface AppFrameProps {
   className?: string
 }
 
+function SchoolName({ school }: { school: FrameSchool }) {
+  return <span className="min-w-0 truncate text-sm font-semibold">{school.name}</span>
+}
+
 /**
- * The frame around an app with a nav. It wraps the page on all four sides,
- * holds the app's nav, and shows the app name in its top edge. The frame takes
- * the CollegeVine look. An app with no nav gets no frame.
+ * The frame around an app. It wraps the page on all four sides, holds the
+ * app's nav, and shows the school name in its top edge.
+ *
+ * Without a `school`, the frame takes the CollegeVine look, and the app name
+ * sits where the school name goes. An app with no school and no nav gets no frame.
  *
  * Only the page scrolls, and the frame stays in place. The bottom edge of the
  * frame comes into view when the user scrolls to the end of the page. Where the
@@ -43,9 +80,25 @@ export interface AppFrameProps {
  * button in the top edge. The button opens the nav in a drawer from the left
  * side, and the drawer closes when a nav item opens another page.
  *
+ * The `step` is the level on the branding scale, which sets how much school
+ * color the frame shows. Call `defaultBrandingStep` with who the app is for to
+ * get the level of a school's first app.
+ *
+ * - `low`: a very light gray frame around a white page.
+ * - `medium`: a light frame in the hue of the school's primary color, around
+ *   a white page. A primary color close to gray, black or white gets the light
+ *   gray frame of the `low` level.
+ * - `high`: the school's primary color around a white page.
+ *
+ * The selected nav item takes its fill from the frame, so it shows on every
+ * frame. Put the values from `schoolTheme` on the `<html>` element too, for
+ * the neutrals and the selected controls in the page.
+ *
  * @example
  * ```tsx
  * <AppFrame
+ *   school={{ name: "Northfield University", primaryColor: brand.primaryColor }}
+ *   step={defaultBrandingStep("staff")}
  *   appName="Admissions dashboard"
  *   nav={
  *     <>
@@ -58,7 +111,15 @@ export interface AppFrameProps {
  * </AppFrame>
  * ```
  */
-export function AppFrame({ layout = "top", appName, nav, children, className }: AppFrameProps) {
+export function AppFrame({
+  school,
+  step,
+  layout = "top",
+  appName,
+  nav,
+  children,
+  className,
+}: AppFrameProps) {
   const { pathname } = useLocation()
   const scroller = useRef<HTMLDivElement>(null)
   const [menuOpen, setMenuOpen] = useState(false)
@@ -79,7 +140,7 @@ export function AppFrame({ layout = "top", appName, nav, children, className }: 
     return () => observer.disconnect()
   }, [layout])
 
-  if (!nav) {
+  if (!school && !nav) {
     return (
       <div data-slot="app-frame" data-layout="plain" className="min-h-screen bg-background text-foreground">
         <main className={className}>{children}</main>
@@ -87,7 +148,8 @@ export function AppFrame({ layout = "top", appName, nav, children, className }: 
     )
   }
 
-  const colors = unbrandedFrameColors()
+  const colors = school ? frameColors(school.primaryColor, step) : unbrandedFrameColors()
+
   const vars = {
     "--frame": colors.frame,
     "--frame-foreground": colors.frameText,
@@ -97,41 +159,47 @@ export function AppFrame({ layout = "top", appName, nav, children, className }: 
     "--frame-nav-hover": colors.navHover,
   } as CSSProperties
   const title = appName ? <span className="shrink-0 text-sm font-semibold">{appName}</span> : null
+  const identity = school ? <SchoolName school={school} /> : title
   const canvas = (
     <style>{`html{background-color:${colors.frame};scrollbar-gutter:auto}body{background-color:transparent}`}</style>
   )
   const sideNav = (
     <>
-      <div className="flex h-14 shrink-0 items-center px-6">{title}</div>
-      <nav data-slot="app-frame-nav" className="flex flex-col gap-0.5 px-3 pb-3">
-        {nav}
-      </nav>
+      <div className="flex h-14 shrink-0 items-center px-6">{identity}</div>
+      {school && appName ? <div className="px-6 pt-2 pb-2 text-sm font-semibold">{appName}</div> : null}
+      {nav ? (
+        <nav data-slot="app-frame-nav" className="flex flex-col gap-0.5 px-3 pb-3">
+          {nav}
+        </nav>
+      ) : null}
     </>
   )
   const mobileBar = (
     <div data-slot="app-frame-mobile-bar" className="flex h-14 shrink-0 items-center gap-2 px-2 md:hidden">
-      <Drawer.Root open={menuOpen} onOpenChange={setMenuOpen} swipeDirection="left">
-        <Drawer.Trigger
-          aria-label="Open menu"
-          className="inline-flex size-10 shrink-0 items-center justify-center rounded-md text-(--frame-foreground) hover:bg-(--frame-nav-hover)"
-        >
-          <List className="size-5" aria-hidden="true" />
-        </Drawer.Trigger>
-        <Drawer.Portal>
-          <Drawer.Backdrop className="fixed inset-0 bg-foreground/30 transition-opacity duration-200 data-[ending-style]:opacity-0 data-[starting-style]:opacity-0" />
-          <Drawer.Viewport className="fixed inset-0">
-            <Drawer.Popup
-              data-slot="app-frame-menu"
-              style={vars}
-              className="fixed inset-y-0 left-0 flex w-72 max-w-full translate-x-(--drawer-swipe-movement-x,0px) flex-col overflow-y-auto bg-(--frame) text-(--frame-foreground) shadow-lg outline-none transition-transform duration-200 ease-out data-[ending-style]:-translate-x-full data-[starting-style]:-translate-x-full"
-            >
-              <Drawer.Title className="sr-only">{appName ?? "Menu"}</Drawer.Title>
-              {sideNav}
-            </Drawer.Popup>
-          </Drawer.Viewport>
-        </Drawer.Portal>
-      </Drawer.Root>
-      <span className="flex min-w-0 items-center">{title}</span>
+      {nav ? (
+        <Drawer.Root open={menuOpen} onOpenChange={setMenuOpen} swipeDirection="left">
+          <Drawer.Trigger
+            aria-label="Open menu"
+            className="inline-flex size-10 shrink-0 items-center justify-center rounded-md text-(--frame-foreground) hover:bg-(--frame-nav-hover)"
+          >
+            <List className="size-5" aria-hidden="true" />
+          </Drawer.Trigger>
+          <Drawer.Portal>
+            <Drawer.Backdrop className="fixed inset-0 bg-foreground/30 transition-opacity duration-200 data-[ending-style]:opacity-0 data-[starting-style]:opacity-0" />
+            <Drawer.Viewport className="fixed inset-0">
+              <Drawer.Popup
+                data-slot="app-frame-menu"
+                style={vars}
+                className="fixed inset-y-0 left-0 flex w-72 max-w-full translate-x-(--drawer-swipe-movement-x,0px) flex-col overflow-y-auto bg-(--frame) text-(--frame-foreground) shadow-lg outline-none transition-transform duration-200 ease-out data-[ending-style]:-translate-x-full data-[starting-style]:-translate-x-full"
+              >
+                <Drawer.Title className="sr-only">{appName ?? school?.name ?? "Menu"}</Drawer.Title>
+                {sideNav}
+              </Drawer.Popup>
+            </Drawer.Viewport>
+          </Drawer.Portal>
+        </Drawer.Root>
+      ) : null}
+      <span className={cn("flex min-w-0 items-center", nav ? "" : "px-2")}>{identity}</span>
     </div>
   )
   const page = (
@@ -167,6 +235,7 @@ export function AppFrame({ layout = "top", appName, nav, children, className }: 
       <div
         data-slot="app-frame"
         data-layout="left"
+        data-step={step ?? "unbranded"}
         style={vars}
         className="flex h-dvh flex-col overflow-hidden bg-(--frame) text-(--frame-foreground) md:flex-row"
       >
@@ -182,16 +251,25 @@ export function AppFrame({ layout = "top", appName, nav, children, className }: 
     <div
       data-slot="app-frame"
       data-layout="top"
+      data-step={step ?? "unbranded"}
       style={vars}
       className="flex h-dvh flex-col overflow-hidden bg-(--frame) text-(--frame-foreground)"
     >
       {canvas}
       {mobileBar}
       <header className="hidden h-14 shrink-0 items-center gap-4 px-4 md:flex">
-        {title}
-        <nav data-slot="app-frame-nav" className="flex min-w-0 items-center gap-1">
-          {nav}
-        </nav>
+        {identity}
+        {school && title ? (
+          <>
+            <span aria-hidden="true" className="h-5 w-px shrink-0 bg-current opacity-30" />
+            {title}
+          </>
+        ) : null}
+        {nav ? (
+          <nav data-slot="app-frame-nav" className="flex min-w-0 items-center gap-1">
+            {nav}
+          </nav>
+        ) : null}
       </header>
       {page}
     </div>
