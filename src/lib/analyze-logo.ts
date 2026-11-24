@@ -1,4 +1,5 @@
 import type { SchoolLogo } from "../components/app-frame.js"
+import { luminanceContrast, parseHex, rgbLuminance } from "./color.js"
 
 export type LogoTone = "white" | "black" | "color"
 
@@ -22,6 +23,7 @@ export interface LogoAnalysis {
   logo: SchoolLogo
   ratio: number
   tone: LogoTone
+  readsOnDark: boolean
   crop: Crop
   cleanSrc: string | null
 }
@@ -48,6 +50,14 @@ function distance(pixels: Uint8ClampedArray, i: number, color: [number, number, 
   )
 }
 
+function isBackground(pixels: Uint8ClampedArray, i: number, background: [number, number, number]) {
+  return distance(pixels, i, background) <= BACKGROUND_DISTANCE
+}
+
+function isClear(pixels: Uint8ClampedArray, i: number, background: [number, number, number] | null) {
+  return channel(pixels, i + 3) <= CLEAR_ALPHA || (background !== null && isBackground(pixels, i, background))
+}
+
 function solidCorner(pixels: Uint8ClampedArray, width: number, height: number): [number, number, number] | null {
   const corners = [0, width - 1, (height - 1) * width, height * width - 1].map((p) => p * 4)
   const first = corners[0] ?? 0
@@ -62,7 +72,7 @@ function solidCorner(pixels: Uint8ClampedArray, width: number, height: number): 
 
 function clearBackground(pixels: Uint8ClampedArray, background: [number, number, number]) {
   for (let i = 0; i < pixels.length; i += 4) {
-    if (distance(pixels, i, background) <= BACKGROUND_DISTANCE) pixels[i + 3] = 0
+    if (isBackground(pixels, i, background)) pixels[i + 3] = 0
   }
 }
 
@@ -83,8 +93,7 @@ export function inkBounds(
   for (let y = 0; y < height; y++) {
     for (let x = 0; x < width; x++) {
       const i = (y * width + x) * 4
-      if (channel(pixels, i + 3) <= CLEAR_ALPHA) continue
-      if (background && distance(pixels, i, background) <= BACKGROUND_DISTANCE) continue
+      if (isClear(pixels, i, background)) continue
       ink++
       if (Math.min(channel(pixels, i), channel(pixels, i + 1), channel(pixels, i + 2)) > WHITE_CHANNEL) whiteInk++
       if (Math.max(channel(pixels, i), channel(pixels, i + 1), channel(pixels, i + 2)) < BLACK_CHANNEL) blackInk++
@@ -98,6 +107,26 @@ export function inkBounds(
   const tone: LogoTone =
     whiteInk / ink >= WHITE_SHARE ? "white" : blackInk / ink >= BLACK_SHARE ? "black" : "color"
   return { left, top, right, bottom, background, tone }
+}
+
+const DARK_TAB = "#35363a"
+const DARK_TAB_CONTRAST = 3
+const READABLE_SHARE = 0.5
+
+export function readsOnDark(pixels: Uint8ClampedArray, width: number, bounds: InkBounds) {
+  const tab = rgbLuminance(parseHex(DARK_TAB))
+  let ink = 0
+  let readable = 0
+  for (let y = bounds.top; y <= bounds.bottom; y++) {
+    for (let x = bounds.left; x <= bounds.right; x++) {
+      const i = (y * width + x) * 4
+      if (isClear(pixels, i, bounds.background)) continue
+      ink++
+      const color: [number, number, number] = [channel(pixels, i), channel(pixels, i + 1), channel(pixels, i + 2)]
+      if (luminanceContrast(rgbLuminance(color), tab) >= DARK_TAB_CONTRAST) readable++
+    }
+  }
+  return ink > 0 && readable / ink >= READABLE_SHARE
 }
 
 function isSvg(src: string) {
@@ -168,6 +197,7 @@ export function analyzeLogo(logo: SchoolLogo): Promise<LogoAnalysis | null> {
         logo,
         ratio: inkWidth / inkHeight,
         tone: bounds.tone,
+        readsOnDark: readsOnDark(pixels, width, bounds),
         crop: {
           x: bounds.left / width,
           y: bounds.top / height,

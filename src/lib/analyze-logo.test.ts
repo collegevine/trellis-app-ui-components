@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest"
 
-import { inkBounds } from "./analyze-logo.js"
+import { inkBounds, readsOnDark } from "./analyze-logo.js"
 
 type Rgba = [number, number, number, number]
 
@@ -67,5 +67,26 @@ describe("inkBounds", () => {
 
   it("finds nothing in an empty file", () => {
     expect(inkBounds(image(10, 10, CLEAR, CLEAR, [0, 0, 9, 9]), 10, 10, { solidBackground: false })).toBeNull()
+  })
+})
+
+describe("readsOnDark", () => {
+  const GOLD: Rgba = [234, 170, 0, 255]
+  const MID_NAVY: Rgba = [0, 33, 71, 255]
+  function reads(ink: Rgba) {
+    const pixels = image(40, 40, CLEAR, ink, [5, 5, 34, 34])
+    const bounds = inkBounds(pixels, 40, 40, { solidBackground: false })
+    if (!bounds) throw new Error("expected ink")
+    return readsOnDark(pixels, 40, bounds)
+  }
+
+  it("passes a logo that stands out from a dark browser tab, such as a gold or white one", () => {
+    expect(reads(GOLD)).toBe(true)
+    expect(reads(PAPER)).toBe(true)
+  })
+
+  it("fails a navy or black logo, which a dark browser tab hides", () => {
+    expect(reads(MID_NAVY)).toBe(false)
+    expect(reads(BLACK)).toBe(false)
   })
 })

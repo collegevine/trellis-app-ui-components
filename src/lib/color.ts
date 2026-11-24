@@ -94,15 +94,15 @@ export function maxChroma(l: number, h: number): number {
   return low
 }
 
-function luminance(color: string): number {
-  const [r, g, b] = parseHex(color).map(toLinear) as [number, number, number]
-  return 0.2126 * r + 0.7152 * g + 0.0722 * b
+export function rgbLuminance([r, g, b]: [number, number, number]): number {
+  return 0.2126 * toLinear(r) + 0.7152 * toLinear(g) + 0.0722 * toLinear(b)
+}
+
+export function luminanceContrast(first: number, second: number): number {
+  const [light, dark] = first >= second ? [first, second] : [second, first]
+  return (light + 0.05) / (dark + 0.05)
 }
 
 export function contrastRatio(first: string, second: string): number {
-  const [light, dark] = [luminance(first), luminance(second)].sort((x, y) => y - x) as [
-    number,
-    number,
-  ]
-  return (light + 0.05) / (dark + 0.05)
+  return luminanceContrast(rgbLuminance(parseHex(first)), rgbLuminance(parseHex(second)))
 }

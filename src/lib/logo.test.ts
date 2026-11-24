@@ -6,7 +6,7 @@ import { logoSize, pickLogo, type LogoSpace } from "./logo.js"
 const topEdge: LogoSpace = { area: 28 * 28 * 5, minHeight: 16, maxHeight: 36, maxWidth: 240 }
 
 function analysis(src: string, ratio: number, tone: LogoTone = "color"): LogoAnalysis {
-  return { logo: { src }, ratio, tone, crop: { x: 0, y: 0, width: 1, height: 1 }, cleanSrc: null }
+  return { logo: { src }, ratio, tone, readsOnDark: false, crop: { x: 0, y: 0, width: 1, height: 1 }, cleanSrc: null }
 }
 
 describe("logoSize", () => {

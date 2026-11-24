@@ -11,7 +11,7 @@ import {
   type FrameColors,
 } from "../lib/branding.js"
 import { drawFavicon } from "../lib/draw-favicon.js"
-import { faviconPlan, type FaviconPlan } from "../lib/favicon.js"
+import { faviconPlans, type FaviconPlan } from "../lib/favicon.js"
 import { pickLogo, type LogoSpace } from "../lib/logo.js"
 import { analyzeLogo, type LogoAnalysis } from "../lib/analyze-logo.js"
 import { cn } from "../lib/utils.js"
@@ -25,6 +25,14 @@ export interface SchoolLogo {
    * The frame then leaves out the name next to the logo.
    */
   showsName?: boolean
+  /**
+   * The background that the school made this version for, when the school
+   * uploaded it for one: `light` or `dark`. In dark mode, the browser tab
+   * shows the dark-background version when it stands out from a dark tab,
+   * whatever its color. Without it, the frame decides from the colors in the
+   * image.
+   */
+  background?: "light" | "dark"
 }
 
 /** The school whose brand the frame shows. */
@@ -131,6 +139,21 @@ function analysesOf(logos: SchoolLogo[], analyses: LogoAnalyses) {
   })
 }
 
+const DARK_MODE = "(prefers-color-scheme: dark)"
+
+function useDarkMode() {
+  const [dark, setDark] = useState(false)
+  useEffect(() => {
+    if (typeof window.matchMedia !== "function") return
+    const query = window.matchMedia(DARK_MODE)
+    const update = () => setDark(query.matches)
+    update()
+    query.addEventListener("change", update)
+    return () => query.removeEventListener("change", update)
+  }, [])
+  return dark
+}
+
 function planKey(plan: FaviconPlan) {
   if (plan.kind === "logo") return `logo:${plan.logo.logo.src}`
   return "mark"
@@ -143,9 +166,11 @@ async function drawWithFallback(plan: FaviconPlan) {
 }
 
 function useFavicon(school: FrameSchool | undefined, analyses: LogoAnalyses | null): string | null {
+  const dark = useDarkMode()
   const waiting = Boolean(school && school.logos.length > 0 && !analyses)
   const versions = school && analyses ? analysesOf(school.logos, analyses) : []
-  const plan = waiting ? null : faviconPlan(versions)
+  const plans = waiting ? null : faviconPlans(versions)
+  const plan = plans ? (dark ? plans.dark : plans.light) : null
   const key = plan ? planKey(plan) : null
   const [icon, setIcon] = useState<{ key: string; href: string | null } | null>(null)
   useEffect(() => {
