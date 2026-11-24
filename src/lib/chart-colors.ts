@@ -120,8 +120,8 @@ function nextGeneratedColor(
  * yellow, and have at least 3:1 contrast with the background. When no school
  * color passes, the result is empty and charts keep the theme's colors.
  */
-export function chartColors(colors: { main: string; second?: string }): string[] {
-  const school = [colors.main, colors.second]
+export function chartColors(colors: { primaryColor: string; secondaryColor?: string }): string[] {
+  const school = [colors.primaryColor, colors.secondaryColor]
     .filter((color): color is string => color !== undefined)
     .map(normalizeHex)
   const series = schoolSeries(school)
