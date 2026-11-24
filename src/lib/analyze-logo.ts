@@ -70,7 +70,7 @@ function solidCorner(pixels: Uint8ClampedArray, width: number, height: number): 
   return same ? color : null
 }
 
-export function clearBackground(pixels: Uint8ClampedArray, background: [number, number, number]) {
+function clearBackground(pixels: Uint8ClampedArray, background: [number, number, number]) {
   for (let i = 0; i < pixels.length; i += 4) {
     if (isBackground(pixels, i, background)) pixels[i + 3] = 0
   }
