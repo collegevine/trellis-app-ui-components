@@ -10,6 +10,8 @@ import {
   type BrandingStep,
   type FrameColors,
 } from "../lib/branding.js"
+import { logoSize, type LogoSpace } from "../lib/logo.js"
+import { analyzeLogo, type LogoAnalysis } from "../lib/analyze-logo.js"
 import { cn } from "../lib/utils.js"
 
 /** One version of a school logo, such as the one-line logo, the stacked logo or the white logo. */
@@ -31,8 +33,9 @@ export interface FrameSchool {
   primaryColor: string
   /**
    * Every version of the school logo that the app has. The frame shows the
-   * first one at a fixed height. The full-color frame turns it white, or black
-   * when the school color is light.
+   * first one. It removes the empty space around the logo and sizes it so that
+   * a wide logo and a compact logo cover about the same area. The full-color
+   * frame turns it white, or black when the school color is light.
    */
   logos: SchoolLogo[]
 }
@@ -94,20 +97,78 @@ export type AppFrameProps = AppFrameBrand & {
 const WHITE_LOGO = "brightness(0) invert(1)"
 const BLACK_LOGO = "brightness(0)"
 
-function Logo({ school, look }: { school: FrameSchool; look: FrameColors["logo"] }) {
+const TOP_EDGE: LogoSpace = { area: 3920, minHeight: 16, maxHeight: 32, maxWidth: 280 }
+const LEFT_NAV: LogoSpace = { area: 3920, minHeight: 16, maxHeight: 32, maxWidth: 192 }
+const PHONE_BAR: LogoSpace = { area: 3920, minHeight: 16, maxHeight: 32, maxWidth: 220 }
+const ABOVE_PAGE: LogoSpace = { area: 5120, minHeight: 18, maxHeight: 44, maxWidth: 320 }
+
+type LogoAnalyses = Map<string, LogoAnalysis | null>
+
+function useLogoAnalyses(logos: SchoolLogo[]): LogoAnalyses | null {
+  const key = logos.map((logo) => logo.src).join("\n")
+  const [analyses, setAnalyses] = useState<{ key: string; value: LogoAnalyses } | null>(null)
+  useEffect(() => {
+    let current = true
+    Promise.all(logos.map((logo) => analyzeLogo(logo))).then((results) => {
+      if (!current) return
+      setAnalyses({ key, value: new Map(logos.map((logo, i) => [logo.src, results[i] ?? null])) })
+    })
+    return () => {
+      current = false
+    }
+  }, [key])
+  return analyses?.key === key ? analyses.value : null
+}
+
+function Logo({
+  school,
+  look,
+  space,
+  analyses,
+}: {
+  school: FrameSchool
+  look: FrameColors["logo"]
+  space: LogoSpace
+  analyses: LogoAnalyses | null
+}) {
   const logo = school.logos[0]
   if (!logo) return null
   const filter = look === "white" ? WHITE_LOGO : look === "black" ? BLACK_LOGO : undefined
   const name = logo.showsName ? null : <span className="truncate text-sm font-semibold">{school.name}</span>
+  const analysis = analyses?.get(logo.src)
+  if (!analysis) {
+    return (
+      <span className="flex min-w-0 items-center gap-2.5">
+        <img
+          data-slot="app-frame-logo"
+          src={logo.src}
+          alt={`${school.name} logo`}
+          className="h-7 w-auto shrink-0"
+          style={{ filter, visibility: analyses ? undefined : "hidden" }}
+        />
+        {name}
+      </span>
+    )
+  }
+  const { width, height } = logoSize(analysis.ratio, space)
+  const { crop } = analysis
   return (
     <span className="flex min-w-0 items-center gap-2.5">
-      <img
-        data-slot="app-frame-logo"
-        src={logo.src}
-        alt={`${school.name} logo`}
-        className="h-7 w-auto shrink-0"
-        style={{ filter }}
-      />
+      <span className="relative block shrink-0 overflow-hidden" style={{ width, height }}>
+        <img
+          data-slot="app-frame-logo"
+          src={logo.src}
+          alt={`${school.name} logo`}
+          className="absolute max-w-none"
+          style={{
+            width: width / crop.width,
+            height: height / crop.height,
+            left: -(crop.x * width) / crop.width,
+            top: -(crop.y * height) / crop.height,
+            filter,
+          }}
+        />
+      </span>
       {name}
     </span>
   )
@@ -193,7 +254,9 @@ export function AppFrame({
 
   const colors = school ? frameColors(school.primaryColor, step) : unbrandedFrameColors()
   const hasLogo = Boolean(school && school.logos.length > 0)
-  const logoIn = (look: FrameColors["logo"] = colors.logo) => (school ? <Logo school={school} look={look} /> : null)
+  const analyses = useLogoAnalyses(school?.logos ?? [])
+  const logoIn = (space: LogoSpace, look: FrameColors["logo"] = colors.logo) =>
+    school ? <Logo school={school} look={look} space={space} analyses={analyses} /> : null
   const schoolName = school ? <span className="min-w-0 truncate text-sm font-semibold">{school.name}</span> : null
   const identityIn = (logo: ReactNode) => (hasLogo ? logo : schoolName)
 
@@ -207,7 +270,7 @@ export function AppFrame({
       >
         {school ? (
           <header className="flex h-14 items-center px-6">
-            {identityIn(logoIn("original"))}
+            {identityIn(logoIn(ABOVE_PAGE, "original"))}
           </header>
         ) : null}
         <main className={className}>{children}</main>
@@ -229,7 +292,7 @@ export function AppFrame({
   )
   const sideNav = (
     <>
-      <div className="flex h-14 shrink-0 items-center px-6">{school ? identityIn(logoIn()) : title}</div>
+      <div className="flex h-14 shrink-0 items-center px-6">{school ? identityIn(logoIn(LEFT_NAV)) : title}</div>
       {school && appName ? <div className="px-6 pt-2 pb-2 text-sm font-semibold">{appName}</div> : null}
       {nav ? (
         <nav data-slot="app-frame-nav" className="flex flex-col gap-0.5 px-3 pb-3">
@@ -263,7 +326,7 @@ export function AppFrame({
           </Drawer.Portal>
         </Drawer.Root>
       ) : null}
-      <span className={cn("flex min-w-0 items-center", nav ? "" : "px-2")}>{school ? identityIn(logoIn()) : title}</span>
+      <span className={cn("flex min-w-0 items-center", nav ? "" : "px-2")}>{school ? identityIn(logoIn(PHONE_BAR)) : title}</span>
     </div>
   )
   const page = (
@@ -322,7 +385,7 @@ export function AppFrame({
       {canvas}
       {mobileBar}
       <header className="hidden h-14 shrink-0 items-center gap-4 px-4 md:flex">
-        {school ? identityIn(logoIn()) : title}
+        {school ? identityIn(logoIn(TOP_EDGE)) : title}
         {school && title ? (
           <>
             <span aria-hidden="true" className="h-5 w-px shrink-0 bg-current opacity-30" />

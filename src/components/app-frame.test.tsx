@@ -108,6 +108,10 @@ describe("AppFrame", () => {
     expect(render(<AppFrame school={redmond} step="high" layout="plain" />)).not.toContain("<style>")
   })
 
+  it("holds the logo out of sight until the frame has measured it", () => {
+    expect(logoTag(render(<AppFrame school={northfield} step="low" />))).toContain("visibility:hidden")
+  })
+
   it("turns the logo white on the full-color frame", () => {
     const html = render(<AppFrame school={redmond} step="high" />)
     expect(logoTag(html)).toContain("redmond.svg")
