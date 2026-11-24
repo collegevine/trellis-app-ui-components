@@ -3,16 +3,16 @@ import { contrastRatio, fromOklch, normalizeHex, toOklch } from "./color.js"
 /**
  * A level on the branding scale, from least to most school color.
  *
- * - `low`: a very light gray frame around a white page. Selected controls
- *   keep the neutral look.
+ * - `low`: a very light gray frame around a white page. The school color
+ *   appears in the logo. Selected controls keep the neutral look.
  * - `medium`: a light frame in the hue of the school's primary color, around
  *   a white page. Every school gets the same lightness and the same small
  *   amount of color. A primary color close to gray, black or white has no hue
  *   to show, so it gets the light gray frame of the `low` level. Selected
  *   controls take the school's primary color when it stands out from the page (see {@link selectedFill}).
  * - `high`: the school's primary color as the frame, around a white
- *   page. Selected controls take the school's primary color when it stands out
- *   from the page.
+ *   page. The logo shows in white. Selected controls take the school's primary
+ *   color when it stands out from the page.
  */
 export type BrandingStep = "low" | "medium" | "high"
 
@@ -157,6 +157,7 @@ export interface FrameColors {
   navSelected: string
   navSelectedText: string
   navHover: string
+  logo: "original" | "white" | "black"
 }
 
 
@@ -212,6 +213,7 @@ export function frameColors(color: string, step: BrandingStep): FrameColors {
       navSelected: tint(mainColor, 8),
       navSelectedText: DARK_TEXT,
       navHover: `color-mix(in srgb, ${frameText} 14%, transparent)`,
+      logo: frameText === LIGHT_TEXT ? "white" : "black",
     }
   }
   if (step === "medium" && !isNeutral(mainColor)) {
@@ -220,6 +222,7 @@ export function frameColors(color: string, step: BrandingStep): FrameColors {
       frameText: DARK_TEXT,
       page: PAGE,
       navSelectedText: DARK_TEXT,
+      logo: "original",
     }
   }
   return {
@@ -229,6 +232,7 @@ export function frameColors(color: string, step: BrandingStep): FrameColors {
     navSelected: darken(LIGHT_GRAY_FRAME, 8),
     navSelectedText: DARK_TEXT,
     navHover: darken(LIGHT_GRAY_FRAME, 4),
+    logo: "original",
   }
 }
 
@@ -254,5 +258,6 @@ export function unbrandedFrameColors(): FrameColors {
     navSelected: `color-mix(in oklab, ${frame}, var(--foreground) 8%)`,
     navSelectedText: "var(--foreground)",
     navHover: `color-mix(in oklab, ${frame}, var(--foreground) 4%)`,
+    logo: "original",
   }
 }
