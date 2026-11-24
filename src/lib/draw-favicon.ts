@@ -1,5 +1,5 @@
 import type { FaviconPlan } from "./favicon.js"
-import { loadImage, type LogoMeasurement } from "./measure-logo.js"
+import { loadImage, type LogoAnalysis } from "./analyze-logo.js"
 
 const ICON_SIZE = 64
 const MARK_BOUNDS = { x: 70, y: 60, width: 148, height: 169 }
@@ -25,7 +25,7 @@ function fitted(ratio: number, size: number): Box {
   return { x: (ICON_SIZE - width) / 2, y: (ICON_SIZE - height) / 2, width, height }
 }
 
-async function drawLogo(context: CanvasRenderingContext2D, logo: LogoMeasurement) {
+async function drawLogo(context: CanvasRenderingContext2D, logo: LogoAnalysis) {
   const image = await loadImage(logo.cleanSrc ?? logo.logo.src)
   const crop = logo.cleanSrc ? { x: 0, y: 0, width: 1, height: 1 } : logo.crop
   const ink = fitted(logo.ratio, ICON_SIZE)
@@ -40,7 +40,7 @@ async function drawMark(context: CanvasRenderingContext2D) {
   context.drawImage(image, box.x, box.y, box.width, box.height)
 }
 
-export async function drawFavicon(plan: FaviconPlan<LogoMeasurement>): Promise<string | null> {
+export async function drawFavicon(plan: FaviconPlan): Promise<string | null> {
   const target = canvas()
   if (!target) return null
   try {
