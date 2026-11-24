@@ -54,9 +54,10 @@ export interface FrameSchool {
  * - `plain`: no frame. The logo sits above the page. With a school brand, the
  *   page is white at the `low` level, a light gray at the
  *   `medium` level, and a very light tint in the hue of the school's primary
- *   color at the `high` level. Use the plain layout on a page where a user
- *   fills out a form and sees nothing else of the app. The frame is for
- *   school staff who work in the app. On a page that both non-staff and
+ *   color at the `high` level. A primary color close to gray, black or white
+ *   gets the light gray page at the `high` level too. Use the plain layout on
+ *   a page where a user fills out a form and sees nothing else of the app.
+ *   The frame is for school staff who work in the app. On a page that both non-staff and
  *   school staff use (non-staff fill out the form, and staff view, edit or
  *   manage it), pick the layout for each viewer when the page loads: a
  *   signed-in member of the school staff sees the frame, and every other
@@ -251,7 +252,8 @@ function Logo({
  *
  * - `low`: a very light gray frame around a white page.
  * - `medium`: a light frame in the hue of the school's primary color, around
- *   a white page.
+ *   a white page. A primary color close to gray, black or white gets the light
+ *   gray frame of the `low` level.
  * - `high`: the school's primary color around a white page, with
  *   the logo in white.
  *
