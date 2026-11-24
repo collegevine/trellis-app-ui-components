@@ -15,8 +15,8 @@ import { cn } from "../lib/utils.js"
 export interface FrameSchool {
   /** The school's name, shown in the top edge of the frame. */
   name: string
-  /** The main school color, as a hex value. */
-  main: string
+  /** The school's primary color, as a hex value. */
+  primaryColor: string
 }
 
 /**
@@ -28,7 +28,7 @@ export interface FrameSchool {
  *   name and the app name.
  * - `plain`: no frame. The school name sits above the page. With a school brand, the
  *   page is white at the `low` level, a light gray at the
- *   `medium` level, and a very light tint in the hue of the main school
+ *   `medium` level, and a very light tint in the hue of the school's primary
  *   color at the `high` level. Use the plain layout on a page where a user
  *   fills out a form and sees nothing else of the app. The frame is for
  *   school staff who work in the app. On a page that both non-staff and
@@ -98,9 +98,9 @@ function SchoolName({ school }: { school: FrameSchool }) {
  * get the level of a school's first app.
  *
  * - `low`: a very light gray frame around a white page.
- * - `medium`: a light frame in the hue of the main school color, around
+ * - `medium`: a light frame in the hue of the school's primary color, around
  *   a white page.
- * - `high`: the main school color around a white page.
+ * - `high`: the school's primary color around a white page.
  *
  * The selected nav item takes its fill from the frame, so it shows on every
  * frame. Put the values from `schoolTheme` on the `<html>` element too, for
@@ -109,7 +109,7 @@ function SchoolName({ school }: { school: FrameSchool }) {
  * @example
  * ```tsx
  * <AppFrame
- *   school={{ name: "Northfield University", main: brand.main }}
+ *   school={{ name: "Northfield University", primaryColor: brand.primaryColor }}
  *   step={defaultBrandingStep("staff")}
  *   appName="Admissions dashboard"
  *   nav={
@@ -152,7 +152,7 @@ export function AppFrame({
     return () => observer.disconnect()
   }, [layout])
 
-  const colors = school ? frameColors(school.main, step) : unbrandedFrameColors()
+  const colors = school ? frameColors(school.primaryColor, step) : unbrandedFrameColors()
 
   if (layout === "plain" || (!school && !nav)) {
     return (
@@ -160,7 +160,7 @@ export function AppFrame({
         data-slot="app-frame"
         data-layout="plain"
         className="min-h-screen bg-(--frame-page) text-foreground"
-        style={{ "--frame-page": school ? plainPageColor(school.main, step) : colors.page } as CSSProperties}
+        style={{ "--frame-page": school ? plainPageColor(school.primaryColor, step) : colors.page } as CSSProperties}
       >
         {school ? (
           <header className="flex h-14 items-center px-6">
