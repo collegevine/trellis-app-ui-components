@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest"
 
-import { inkBounds, isRound, logoSize, pickLogo, type LogoSpace, type LogoTone, type MeasuredLogo } from "./logo.js"
+import { inkBounds, logoSize, pickLogo, readsOnDark, type LogoSpace, type LogoTone, type MeasuredLogo } from "./logo.js"
 
 type Rgba = [number, number, number, number]
 
@@ -154,40 +154,23 @@ describe("pickLogo", () => {
   })
 })
 
-function shape(size: number, fill: Rgba, ink: Rgba, inside: (x: number, y: number) => boolean) {
-  const pixels = new Uint8ClampedArray(size * size * 4)
-  for (let y = 0; y < size; y++) {
-    for (let x = 0; x < size; x++) pixels.set(inside(x + 0.5, y + 0.5) ? ink : fill, (y * size + x) * 4)
+describe("readsOnDark", () => {
+  const GOLD: Rgba = [234, 170, 0, 255]
+  const MID_NAVY: Rgba = [0, 33, 71, 255]
+  function reads(ink: Rgba) {
+    const pixels = image(40, 40, CLEAR, ink, [5, 5, 34, 34])
+    const bounds = inkBounds(pixels, 40, 40, { solidBackground: false })
+    if (!bounds) throw new Error("expected ink")
+    return readsOnDark(pixels, 40, bounds)
   }
-  return pixels
-}
 
-function roundness(pixels: Uint8ClampedArray, size: number, solidBackground = false) {
-  const bounds = inkBounds(pixels, size, size, { solidBackground })
-  if (!bounds) throw new Error("expected ink")
-  return isRound(pixels, size, bounds)
-}
-
-describe("isRound", () => {
-  const size = 80
-  const circle = (x: number, y: number) => Math.hypot(x - size / 2, y - size / 2) <= size / 2
-  const ring = (x: number, y: number) => {
-    const d = Math.hypot(x - size / 2, y - size / 2)
-    return d <= size / 2 && d >= size / 2 - 6
-  }
-  const shield = (x: number, y: number) => y <= size / 2 || Math.hypot(x - size / 2, y - size / 2) <= size / 2
-
-  it("finds a round seal, so that dark mode puts it on a white circle", () => {
-    expect(roundness(shape(size, CLEAR, RED, circle), size)).toBe(true)
-    expect(roundness(shape(size, CLEAR, NAVY, ring), size)).toBe(true)
+  it("passes a logo that stands out from a dark browser tab, such as a gold or white one", () => {
+    expect(reads(GOLD)).toBe(true)
+    expect(reads(PAPER)).toBe(true)
   })
 
-  it("finds a round seal on a solid background", () => {
-    expect(roundness(shape(size, PAPER, NAVY, circle), size, true)).toBe(true)
-  })
-
-  it("does not call a square logo or a shield round", () => {
-    expect(roundness(shape(size, CLEAR, RED, () => true), size)).toBe(false)
-    expect(roundness(shape(size, CLEAR, RED, shield), size)).toBe(false)
+  it("fails a navy or black logo, which a dark browser tab hides", () => {
+    expect(reads(MID_NAVY)).toBe(false)
+    expect(reads(BLACK)).toBe(false)
   })
 })

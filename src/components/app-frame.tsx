@@ -25,6 +25,14 @@ export interface SchoolLogo {
    * The frame then leaves out the name next to the logo.
    */
   showsName?: boolean
+  /**
+   * The background that the school made this version for, when the school
+   * uploaded it for one: `light` or `dark`. In dark mode, the browser tab
+   * shows the dark-background version when it stands out from a dark tab,
+   * whatever its color. Without it, the frame decides from the colors in the
+   * image.
+   */
+  background?: "light" | "dark"
 }
 
 /** The school whose brand the frame shows. */
@@ -146,7 +154,7 @@ function useDarkMode() {
 }
 
 function planKey(plan: FaviconPlan<LogoMeasurement>) {
-  if (plan.kind === "logo") return `logo:${plan.logo.logo.src}:${plan.backing}`
+  if (plan.kind === "logo") return `logo:${plan.logo.logo.src}`
   return "mark"
 }
 

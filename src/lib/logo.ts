@@ -1,4 +1,5 @@
 import type { SchoolLogo } from "../components/app-frame.js"
+import { luminanceContrast, parseHex, rgbLuminance } from "./color.js"
 
 export interface LogoSpace {
   area: number
@@ -110,30 +111,28 @@ export function inkBounds(
   return { left, top, right, bottom, background, tone }
 }
 
-const CORNER_SHARE = 0.12
-
 function isClear(pixels: Uint8ClampedArray, i: number, background: InkBounds["background"]) {
   return channel(pixels, i + 3) <= CLEAR_ALPHA || (background !== null && distance(pixels, i, background) <= BACKGROUND_DISTANCE)
 }
 
-export function isRound(pixels: Uint8ClampedArray, width: number, bounds: InkBounds) {
-  const inkWidth = bounds.right - bounds.left + 1
-  const inkHeight = bounds.bottom - bounds.top + 1
-  const corner = Math.max(1, Math.round(CORNER_SHARE * Math.min(inkWidth, inkHeight)))
-  const corners: [number, number][] = [
-    [bounds.left, bounds.top],
-    [bounds.right - corner + 1, bounds.top],
-    [bounds.left, bounds.bottom - corner + 1],
-    [bounds.right - corner + 1, bounds.bottom - corner + 1],
-  ]
-  return corners.every(([left, top]) => {
-    for (let y = top; y < top + corner; y++) {
-      for (let x = left; x < left + corner; x++) {
-        if (!isClear(pixels, (y * width + x) * 4, bounds.background)) return false
-      }
+const DARK_TAB = "#35363a"
+const DARK_TAB_CONTRAST = 3
+const READABLE_SHARE = 0.5
+
+export function readsOnDark(pixels: Uint8ClampedArray, width: number, bounds: InkBounds) {
+  const tab = rgbLuminance(parseHex(DARK_TAB))
+  let ink = 0
+  let readable = 0
+  for (let y = bounds.top; y <= bounds.bottom; y++) {
+    for (let x = bounds.left; x <= bounds.right; x++) {
+      const i = (y * width + x) * 4
+      if (isClear(pixels, i, bounds.background)) continue
+      ink++
+      const color: [number, number, number] = [channel(pixels, i), channel(pixels, i + 1), channel(pixels, i + 2)]
+      if (luminanceContrast(rgbLuminance(color), tab) >= DARK_TAB_CONTRAST) readable++
     }
-    return true
-  })
+  }
+  return ink > 0 && readable / ink >= READABLE_SHARE
 }
 
 export function logoSize(ratio: number, space: LogoSpace): LogoSize {

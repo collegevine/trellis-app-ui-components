@@ -1,6 +1,6 @@
 import type { SchoolLogo } from "../components/app-frame.js"
 import type { FaviconLogo } from "./favicon.js"
-import { clearBackground, inkBounds, isRound } from "./logo.js"
+import { clearBackground, inkBounds, readsOnDark } from "./logo.js"
 
 export interface Crop {
   x: number
@@ -83,7 +83,7 @@ async function measure(logo: SchoolLogo): Promise<LogoMeasurement | null> {
     logo,
     ratio: inkWidth / inkHeight,
     tone: bounds.tone,
-    round: isRound(pixels, width, bounds),
+    readsOnDark: readsOnDark(pixels, width, bounds),
     crop: {
       x: bounds.left / width,
       y: bounds.top / height,

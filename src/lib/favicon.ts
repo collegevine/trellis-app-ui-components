@@ -2,16 +2,13 @@ import type { LogoTone, MeasuredLogo } from "./logo.js"
 
 const FAVICON_MAX_RATIO = 1.25
 const LIGHT_TONES: LogoTone[] = ["color", "black"]
+const DARK_TONES: LogoTone[] = ["white", "color"]
 
 export interface FaviconLogo extends MeasuredLogo {
-  round: boolean
+  readsOnDark: boolean
 }
 
-export type FaviconBacking = "none" | "circle" | "square"
-
-export type FaviconPlan<T extends FaviconLogo = FaviconLogo> =
-  | { kind: "logo"; logo: T; backing: FaviconBacking }
-  | { kind: "mark" }
+export type FaviconPlan<T extends FaviconLogo = FaviconLogo> = { kind: "logo"; logo: T } | { kind: "mark" }
 
 export interface FaviconPlans<T extends FaviconLogo = FaviconLogo> {
   light: FaviconPlan<T>
@@ -34,13 +31,16 @@ function mostSquare<T extends FaviconLogo>(versions: T[], tones: LogoTone[]): T 
 const MARK: FaviconPlans<never> = { light: { kind: "mark" }, dark: { kind: "mark" } }
 
 export function faviconPlans<T extends FaviconLogo>(versions: T[]): FaviconPlans<T> {
-  const logo = mostSquare(versions, LIGHT_TONES)
-  if (!logo) return MARK
-  const white = mostSquare(versions, ["white"])
+  const logo =
+    mostSquare(versions.filter((v) => v.logo.background !== "dark"), LIGHT_TONES) ??
+    mostSquare(versions, LIGHT_TONES)
+  const readable = versions.filter((v) => v.readsOnDark)
+  const darkLogo =
+    mostSquare(readable.filter((v) => v.logo.background === "dark"), DARK_TONES) ??
+    mostSquare(readable.filter((v) => v.logo.background !== "light"), ["white"]) ??
+    logo
   return {
-    light: { kind: "logo", logo, backing: "none" },
-    dark: white
-      ? { kind: "logo", logo: white, backing: "none" }
-      : { kind: "logo", logo, backing: logo.round ? "circle" : "square" },
+    light: logo ? { kind: "logo", logo } : MARK.light,
+    dark: darkLogo ? { kind: "logo", logo: darkLogo } : MARK.dark,
   }
 }

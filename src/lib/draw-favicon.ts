@@ -1,10 +1,7 @@
-import type { FaviconBacking, FaviconPlan } from "./favicon.js"
+import type { FaviconPlan } from "./favicon.js"
 import { loadImage, type LogoMeasurement } from "./measure-logo.js"
 
 const ICON_SIZE = 64
-const SQUARE_RADIUS = 12
-const SQUARE_INSET = 6
-const BACKING_COLOR = "#ffffff"
 const MARK_BOUNDS = { x: 70, y: 60, width: 148, height: 169 }
 const MARK_SVG =
   `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${MARK_BOUNDS.x} ${MARK_BOUNDS.y} ${MARK_BOUNDS.width} ${MARK_BOUNDS.height}">` +
@@ -28,22 +25,12 @@ function fitted(ratio: number, size: number): Box {
   return { x: (ICON_SIZE - width) / 2, y: (ICON_SIZE - height) / 2, width, height }
 }
 
-function drawBacking(context: CanvasRenderingContext2D, backing: FaviconBacking) {
-  if (backing === "none") return
-  context.fillStyle = BACKING_COLOR
-  context.beginPath()
-  if (backing === "circle") context.arc(ICON_SIZE / 2, ICON_SIZE / 2, ICON_SIZE / 2, 0, Math.PI * 2)
-  else context.roundRect(0, 0, ICON_SIZE, ICON_SIZE, SQUARE_RADIUS)
-  context.fill()
-}
-
-async function drawLogo(context: CanvasRenderingContext2D, logo: LogoMeasurement, backing: FaviconBacking) {
+async function drawLogo(context: CanvasRenderingContext2D, logo: LogoMeasurement) {
   const image = await loadImage(logo.cleanSrc ?? logo.logo.src)
   const crop = logo.cleanSrc ? { x: 0, y: 0, width: 1, height: 1 } : logo.crop
-  const ink = fitted(logo.ratio, backing === "square" ? ICON_SIZE - 2 * SQUARE_INSET : ICON_SIZE)
+  const ink = fitted(logo.ratio, ICON_SIZE)
   const width = ink.width / crop.width
   const height = ink.height / crop.height
-  drawBacking(context, backing)
   context.drawImage(image, ink.x - crop.x * width, ink.y - crop.y * height, width, height)
 }
 
@@ -57,7 +44,7 @@ export async function drawFavicon(plan: FaviconPlan<LogoMeasurement>): Promise<s
   const target = canvas()
   if (!target) return null
   try {
-    if (plan.kind === "logo") await drawLogo(target.context, plan.logo, plan.backing)
+    if (plan.kind === "logo") await drawLogo(target.context, plan.logo)
     else await drawMark(target.context)
     return target.element.toDataURL("image/png")
   } catch {

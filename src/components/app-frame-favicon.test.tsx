@@ -8,10 +8,11 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import type { FaviconPlan } from "../lib/favicon.js"
 import type { SchoolLogo } from "./app-frame.js"
 
-const LOGOS: Record<string, { ratio: number; tone: string; round: boolean }> = {
-  "/seal.png": { ratio: 1, tone: "color", round: true },
-  "/seal-white.png": { ratio: 1, tone: "white", round: true },
-  "/one-line.png": { ratio: 5.2, tone: "color", round: false },
+const LOGOS: Record<string, { ratio: number; tone: string; readsOnDark: boolean }> = {
+  "/seal.png": { ratio: 1, tone: "color", readsOnDark: false },
+  "/seal-white.png": { ratio: 1, tone: "white", readsOnDark: true },
+  "/one-line.png": { ratio: 5.2, tone: "color", readsOnDark: false },
+  "/seal-gold.png": { ratio: 1, tone: "color", readsOnDark: true },
 }
 
 vi.mock("../lib/measure-logo.js", () => ({
@@ -26,9 +27,7 @@ vi.mock("../lib/measure-logo.js", () => ({
 vi.mock("../lib/draw-favicon.js", () => ({
   drawFavicon: (plan: FaviconPlan) =>
     Promise.resolve(
-      plan.kind === "logo"
-        ? `icon:${plan.logo.logo.src}:${plan.backing}`
-        : "icon:mark"
+      plan.kind === "logo" ? `icon:${plan.logo.logo.src}` : "icon:mark"
     ),
 }))
 
@@ -92,20 +91,33 @@ describe("AppFrame favicon", () => {
         <p>Page</p>
       </AppFrame>
     )
-    expect(favicon()).toBe("icon:/seal-white.png:none")
+    expect(favicon()).toBe("icon:/seal-white.png")
+  })
+
+  it("shows the logo that the school made for dark backgrounds in dark mode, even when it is not white", async () => {
+    darkMode = true
+    await render(
+      <AppFrame
+        school={{ ...monza, logos: [{ src: "/seal.png", background: "light" }, { src: "/seal-gold.png", background: "dark" }] }}
+        step="low"
+      >
+        <p>Page</p>
+      </AppFrame>
+    )
+    expect(favicon()).toBe("icon:/seal-gold.png")
   })
 
   it("follows the dark mode setting when it changes while the app is open", async () => {
     await render(
-      <AppFrame school={{ ...monza, logos: [{ src: "/seal.png" }] }} step="low" appName="Class progress">
+      <AppFrame school={{ ...monza, logos: [{ src: "/seal.png" }, { src: "/seal-white.png" }] }} step="low" appName="Class progress">
         <p>Page</p>
       </AppFrame>
     )
-    expect(favicon()).toBe("icon:/seal.png:none")
+    expect(favicon()).toBe("icon:/seal.png")
     darkMode = true
     await act(async () => listeners.forEach((listener) => listener()))
     await settle()
-    expect(favicon()).toBe("icon:/seal.png:circle")
+    expect(favicon()).toBe("icon:/seal-white.png")
   })
 
   it("shows the CollegeVine mark when every logo is wide, also on a form page with no frame", async () => {
