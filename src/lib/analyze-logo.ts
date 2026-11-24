@@ -104,7 +104,7 @@ function isSvg(src: string) {
   return /\.svg(?:[?#]|$)/i.test(src) || src.startsWith("data:image/svg")
 }
 
-function loadImage(src: string) {
+export function loadImage(src: string) {
   return new Promise<HTMLImageElement>((resolve, reject) => {
     const image = new Image()
     image.decoding = "async"

@@ -10,6 +10,8 @@ import {
   type BrandingStep,
   type FrameColors,
 } from "../lib/branding.js"
+import { drawFavicon } from "../lib/draw-favicon.js"
+import { faviconPlan, type FaviconPlan } from "../lib/favicon.js"
 import { pickLogo, type LogoSpace } from "../lib/logo.js"
 import { analyzeLogo, type LogoAnalysis } from "../lib/analyze-logo.js"
 import { cn } from "../lib/utils.js"
@@ -122,6 +124,43 @@ function useLogoAnalyses(logos: SchoolLogo[]): LogoAnalyses | null {
   return analyses?.key === key ? analyses.value : null
 }
 
+function analysesOf(logos: SchoolLogo[], analyses: LogoAnalyses) {
+  return logos.flatMap((logo) => {
+    const analysis = analyses.get(logo.src)
+    return analysis ? [analysis] : []
+  })
+}
+
+function planKey(plan: FaviconPlan) {
+  if (plan.kind === "logo") return `logo:${plan.logo.logo.src}`
+  return "mark"
+}
+
+async function drawWithFallback(plan: FaviconPlan) {
+  const href = await drawFavicon(plan)
+  if (href || plan.kind !== "logo") return href
+  return drawFavicon({ kind: "mark" })
+}
+
+function useFavicon(school: FrameSchool | undefined, analyses: LogoAnalyses | null): string | null {
+  const waiting = Boolean(school && school.logos.length > 0 && !analyses)
+  const versions = school && analyses ? analysesOf(school.logos, analyses) : []
+  const plan = waiting ? null : faviconPlan(versions)
+  const key = plan ? planKey(plan) : null
+  const [icon, setIcon] = useState<{ key: string; href: string | null } | null>(null)
+  useEffect(() => {
+    if (!plan || !key) return
+    let current = true
+    drawWithFallback(plan).then((href) => {
+      if (current) setIcon({ key, href })
+    })
+    return () => {
+      current = false
+    }
+  }, [key])
+  return icon?.key === key ? icon.href : null
+}
+
 function Logo({
   school,
   look,
@@ -133,12 +172,7 @@ function Logo({
   space: LogoSpace
   analyses: LogoAnalyses | null
 }) {
-  const versions = analyses
-    ? school.logos.flatMap((logo) => {
-        const analysis = analyses.get(logo.src)
-        return analysis ? [analysis] : []
-      })
-    : []
+  const versions = analyses ? analysesOf(school.logos, analyses) : []
   const choice = pickLogo(versions, space, look)
   const fallback = school.logos[0]
   const logo = choice?.logo ?? fallback
@@ -276,6 +310,8 @@ export function AppFrame({
   const colors = school ? frameColors(school.primaryColor, step) : unbrandedFrameColors()
   const hasLogo = Boolean(school && school.logos.length > 0)
   const analyses = useLogoAnalyses(school?.logos ?? [])
+  const faviconHref = useFavicon(school, analyses)
+  const favicon = faviconHref ? <link rel="icon" href={faviconHref} /> : null
   const logoIn = (space: LogoSpace, look: FrameColors["logo"] = colors.logo) =>
     school ? <Logo school={school} look={look} space={space} analyses={analyses} /> : null
   const schoolName = school ? <span className="min-w-0 truncate text-sm font-semibold">{school.name}</span> : null
@@ -289,6 +325,7 @@ export function AppFrame({
         className="min-h-screen bg-(--frame-page) text-foreground"
         style={{ "--frame-page": school ? plainPageColor(school.primaryColor, step) : colors.page } as CSSProperties}
       >
+        {favicon}
         {school ? (
           <header className="flex h-14 items-center px-6">
             {identityIn(logoIn(ABOVE_PAGE, "original"))}
@@ -388,6 +425,7 @@ export function AppFrame({
         className="flex h-dvh flex-col overflow-hidden bg-(--frame) text-(--frame-foreground) md:flex-row"
       >
         {canvas}
+        {favicon}
         {mobileBar}
         <aside className="hidden w-60 shrink-0 flex-col overflow-y-auto md:flex">{sideNav}</aside>
         {page}
@@ -404,6 +442,7 @@ export function AppFrame({
       className="flex h-dvh flex-col overflow-hidden bg-(--frame) text-(--frame-foreground)"
     >
       {canvas}
+      {favicon}
       {mobileBar}
       <header className="hidden h-14 shrink-0 items-center gap-4 px-4 md:flex">
         {school ? identityIn(logoIn(TOP_EDGE)) : title}
