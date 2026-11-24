@@ -2,8 +2,8 @@ import { contrastRatio, normalizeHex } from "./color.js"
 
 /** A school's brand colors, as hex values. */
 export interface SchoolColors {
-  /** The main school color, such as `#003da5`. */
-  main: string
+  /** The school's primary color, such as `#003da5`. */
+  primaryColor: string
 }
 
 const DARK_TEXT = "#111111"
@@ -32,13 +32,13 @@ export interface Fill {
  * button, a switch that is on, the selected option in a segmented control,
  * the current page number in a table, the selected day in a date picker.
  *
- * The fill is the main school color. A selected control must stand out from
- * the white page, so when the main color has less than 3:1 contrast with
+ * The fill is the school's primary color. A selected control must stand out
+ * from the white page, so when the primary color has less than 3:1 contrast with
  * white, the result is `null` and selected controls keep the neutral look.
- * Yellow, bright green and bright orange main colors fall in that range.
+ * Yellow, bright green and bright orange primary colors fall in that range.
  */
 export function selectedFill(colors: SchoolColors): Fill | null {
-  const main = normalizeHex(colors.main)
+  const main = normalizeHex(colors.primaryColor)
   if (contrastRatio(main, PAGE) < SELECTED_CONTRAST) return null
   return { fill: main, text: readableText(main) }
 }
@@ -62,7 +62,7 @@ const HUELESS_NEUTRALS = {
  *
  * - The neutrals lose their warm hue, because warm grays can clash with a
  *   cool school color such as navy.
- * - `--school-main` and `--school-main-foreground`: the main school color and
+ * - `--school-main` and `--school-main-foreground`: the school's primary color and
  *   the text that goes on it.
  * - `--school-selected` and `--school-selected-foreground`: the fill for
  *   selected controls and its text (see {@link selectedFill}). They are left
@@ -74,15 +74,15 @@ const HUELESS_NEUTRALS = {
  * @example
  * ```tsx
  * // app/root.tsx
- * <html lang="en" style={schoolTheme({ main: "#003da5" })}>
+ * <html lang="en" style={schoolTheme({ primaryColor: "#003da5" })}>
  * ```
  */
 export function schoolTheme(colors: SchoolColors): Record<string, string> {
   const selected = selectedFill(colors)
   return {
     ...HUELESS_NEUTRALS,
-    "--school-main": normalizeHex(colors.main),
-    "--school-main-foreground": readableText(colors.main),
+    "--school-main": normalizeHex(colors.primaryColor),
+    "--school-main-foreground": readableText(colors.primaryColor),
     ...(selected
       ? {
           "--school-selected": selected.fill,
