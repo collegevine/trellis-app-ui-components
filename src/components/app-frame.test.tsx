@@ -7,12 +7,12 @@ import { AppFrame, AppFrameNavLink, type FrameSchool } from "./app-frame.js"
 
 const northfield: FrameSchool = {
   name: "Northfield University",
-  main: "#003da5",
+  primaryColor: "#003da5",
 }
 
 const redmond: FrameSchool = {
   name: "Redmond State University",
-  main: "#c41230",
+  primaryColor: "#c41230",
 }
 
 function render(element: React.ReactElement, path = "/") {
@@ -65,7 +65,7 @@ describe("AppFrame", () => {
 
   it("sets the frame colors for the step", () => {
     const html = render(<AppFrame school={northfield} step="medium" />)
-    expect(html).toContain(`--frame:${frameColors(northfield.main, "medium").frame}`)
+    expect(html).toContain(`--frame:${frameColors(northfield.primaryColor, "medium").frame}`)
     expect(html).toContain('data-step="medium"')
   })
 

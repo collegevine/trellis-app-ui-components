@@ -14,8 +14,8 @@ import { cn } from "../lib/utils.js"
 export interface FrameSchool {
   /** The school's name, shown in the top edge of the frame. */
   name: string
-  /** The main school color, as a hex value. */
-  main: string
+  /** The school's primary color, as a hex value. */
+  primaryColor: string
 }
 
 /**
@@ -85,9 +85,9 @@ function SchoolName({ school }: { school: FrameSchool }) {
  * get the level of a school's first app.
  *
  * - `low`: a very light gray frame around a white page.
- * - `medium`: a light frame in the hue of the main school color, around
+ * - `medium`: a light frame in the hue of the school's primary color, around
  *   a white page.
- * - `high`: the main school color around a white page.
+ * - `high`: the school's primary color around a white page.
  *
  * The selected nav item takes its fill from the frame, so it shows on every
  * frame. Put the values from `schoolTheme` on the `<html>` element too, for
@@ -96,7 +96,7 @@ function SchoolName({ school }: { school: FrameSchool }) {
  * @example
  * ```tsx
  * <AppFrame
- *   school={{ name: "Northfield University", main: brand.main }}
+ *   school={{ name: "Northfield University", primaryColor: brand.primaryColor }}
  *   step={defaultBrandingStep("staff")}
  *   appName="Admissions dashboard"
  *   nav={
@@ -147,7 +147,7 @@ export function AppFrame({
     )
   }
 
-  const colors = school ? frameColors(school.main, step) : unbrandedFrameColors()
+  const colors = school ? frameColors(school.primaryColor, step) : unbrandedFrameColors()
 
   const vars = {
     "--frame": colors.frame,
