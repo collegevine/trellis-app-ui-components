@@ -13,7 +13,7 @@ import {
 import { drawFavicon } from "../lib/draw-favicon.js"
 import { faviconPlans, type FaviconPlan } from "../lib/favicon.js"
 import { pickLogo, type LogoSpace } from "../lib/logo.js"
-import { measureLogo, type LogoMeasurement } from "../lib/measure-logo.js"
+import { analyzeLogo, type LogoAnalysis } from "../lib/analyze-logo.js"
 import { cn } from "../lib/utils.js"
 
 /** One version of a school logo, such as the one-line logo, the stacked logo or the white logo. */
@@ -113,28 +113,28 @@ const LEFT_NAV: LogoSpace = { area: 3920, minHeight: 16, maxHeight: 32, maxWidth
 const PHONE_BAR: LogoSpace = { area: 3920, minHeight: 16, maxHeight: 32, maxWidth: 220 }
 const ABOVE_PAGE: LogoSpace = { area: 5120, minHeight: 18, maxHeight: 44, maxWidth: 320 }
 
-type Measurements = Map<string, LogoMeasurement | null>
+type LogoAnalyses = Map<string, LogoAnalysis | null>
 
-function useLogoMeasurements(logos: SchoolLogo[]): Measurements | null {
+function useLogoAnalyses(logos: SchoolLogo[]): LogoAnalyses | null {
   const key = logos.map((logo) => logo.src).join("\n")
-  const [measurements, setMeasurements] = useState<{ key: string; value: Measurements } | null>(null)
+  const [analyses, setAnalyses] = useState<{ key: string; value: LogoAnalyses } | null>(null)
   useEffect(() => {
     let current = true
-    Promise.all(logos.map((logo) => measureLogo(logo))).then((results) => {
+    Promise.all(logos.map((logo) => analyzeLogo(logo))).then((results) => {
       if (!current) return
-      setMeasurements({ key, value: new Map(logos.map((logo, i) => [logo.src, results[i] ?? null])) })
+      setAnalyses({ key, value: new Map(logos.map((logo, i) => [logo.src, results[i] ?? null])) })
     })
     return () => {
       current = false
     }
   }, [key])
-  return measurements?.key === key ? measurements.value : null
+  return analyses?.key === key ? analyses.value : null
 }
 
-function measuredLogos(logos: SchoolLogo[], measurements: Measurements) {
+function analysesOf(logos: SchoolLogo[], analyses: LogoAnalyses) {
   return logos.flatMap((logo) => {
-    const m = measurements.get(logo.src)
-    return m ? [m] : []
+    const analysis = analyses.get(logo.src)
+    return analysis ? [analysis] : []
   })
 }
 
@@ -153,21 +153,21 @@ function useDarkMode() {
   return dark
 }
 
-function planKey(plan: FaviconPlan<LogoMeasurement>) {
+function planKey(plan: FaviconPlan) {
   if (plan.kind === "logo") return `logo:${plan.logo.logo.src}`
   return "mark"
 }
 
-async function drawWithFallback(plan: FaviconPlan<LogoMeasurement>) {
+async function drawWithFallback(plan: FaviconPlan) {
   const href = await drawFavicon(plan)
   if (href || plan.kind !== "logo") return href
   return drawFavicon({ kind: "mark" })
 }
 
-function useFavicon(school: FrameSchool | undefined, measurements: Measurements | null): string | null {
+function useFavicon(school: FrameSchool | undefined, analyses: LogoAnalyses | null): string | null {
   const dark = useDarkMode()
-  const waiting = Boolean(school && school.logos.length > 0 && !measurements)
-  const versions = school && measurements ? measuredLogos(school.logos, measurements) : []
+  const waiting = Boolean(school && school.logos.length > 0 && !analyses)
+  const versions = school && analyses ? analysesOf(school.logos, analyses) : []
   const plans = waiting ? null : faviconPlans(versions)
   const plan = plans ? (dark ? plans.dark : plans.light) : null
   const key = plan ? planKey(plan) : null
@@ -189,15 +189,15 @@ function Logo({
   school,
   look,
   space,
-  measurements,
+  analyses,
 }: {
   school: FrameSchool
   look: FrameColors["logo"]
   space: LogoSpace
-  measurements: Measurements | null
+  analyses: LogoAnalyses | null
 }) {
-  const measured = measurements ? measuredLogos(school.logos, measurements) : []
-  const choice = pickLogo(measured, space, look)
+  const versions = analyses ? analysesOf(school.logos, analyses) : []
+  const choice = pickLogo(versions, space, look)
   const fallback = school.logos[0]
   const logo = choice?.logo ?? fallback
   if (!logo) return null
@@ -212,14 +212,14 @@ function Logo({
           src={logo.src}
           alt={`${school.name} logo`}
           className="h-7 w-auto shrink-0"
-          style={{ filter, visibility: measurements ? undefined : "hidden" }}
+          style={{ filter, visibility: analyses ? undefined : "hidden" }}
         />
         {name}
       </span>
     )
   }
   const { width, height } = choice.size
-  const { crop, cleanSrc } = choice.measured
+  const { crop, cleanSrc } = choice.analysis
   const image = cleanSrc ? (
     <img
       data-slot="app-frame-logo"
@@ -332,11 +332,11 @@ export function AppFrame({
 
   const colors = school ? frameColors(school.primaryColor, step) : unbrandedFrameColors()
   const hasLogo = Boolean(school && school.logos.length > 0)
-  const measurements = useLogoMeasurements(school?.logos ?? [])
-  const faviconHref = useFavicon(school, measurements)
+  const analyses = useLogoAnalyses(school?.logos ?? [])
+  const faviconHref = useFavicon(school, analyses)
   const favicon = faviconHref ? <link rel="icon" href={faviconHref} /> : null
   const logoIn = (space: LogoSpace, look: FrameColors["logo"] = colors.logo) =>
-    school ? <Logo school={school} look={look} space={space} measurements={measurements} /> : null
+    school ? <Logo school={school} look={look} space={space} analyses={analyses} /> : null
   const schoolName = school ? <span className="min-w-0 truncate text-sm font-semibold">{school.name}</span> : null
   const identityIn = (logo: ReactNode) => (hasLogo ? logo : schoolName)
 

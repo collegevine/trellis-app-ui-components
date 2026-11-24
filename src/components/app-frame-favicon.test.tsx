@@ -15,8 +15,8 @@ const LOGOS: Record<string, { ratio: number; tone: string; readsOnDark: boolean 
   "/seal-gold.png": { ratio: 1, tone: "color", readsOnDark: true },
 }
 
-vi.mock("../lib/measure-logo.js", () => ({
-  measureLogo: (logo: SchoolLogo) =>
+vi.mock("../lib/analyze-logo.js", () => ({
+  analyzeLogo: (logo: SchoolLogo) =>
     Promise.resolve(
       LOGOS[logo.src]
         ? { logo, ...LOGOS[logo.src], crop: { x: 0, y: 0, width: 1, height: 1 }, cleanSrc: null }
