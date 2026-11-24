@@ -81,7 +81,7 @@ function favicon() {
   return document.head.querySelector<HTMLLinkElement>('link[rel="icon"]')?.getAttribute("href") ?? null
 }
 
-const monza = { name: "Monza University", main: "#7a1f2b" }
+const monza = { name: "Monza University", primaryColor: "#7a1f2b" }
 
 describe("AppFrame favicon", () => {
   it("shows the school's seal in light mode and its white seal in dark mode", async () => {
