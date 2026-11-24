@@ -5,6 +5,7 @@ import { NavLink, useLocation, type NavLinkProps } from "react-router"
 
 import {
   frameColors,
+  plainPageColor,
   unbrandedFrameColors,
   type BrandingStep,
 } from "../lib/branding.js"
@@ -25,8 +26,21 @@ export interface FrameSchool {
  *   the school name. Without a school, the app name starts the top edge.
  * - `left`: the nav runs down the left side of the frame, under the school
  *   name and the app name.
+ * - `plain`: no frame. The school name sits above the page. With a school brand, the
+ *   page is white at the `low` level, a light gray at the
+ *   `medium` level, and a very light tint in the hue of the school's primary
+ *   color at the `high` level. A primary color close to gray, black or white
+ *   gets the light gray page at the `high` level too. Use the plain layout on
+ *   a page where a user fills out a form and sees nothing else of the app.
+ *   The frame is for school staff who work in the app. On a page that both non-staff and
+ *   school staff use (non-staff fill out the form, and staff view, edit or
+ *   manage it), pick the layout for each viewer when the page loads: a
+ *   signed-in member of the school staff sees the frame, and every other
+ *   viewer sees the plain layout. A form page that anyone with the link can
+ *   open has no sign-in, so it cannot tell staff from non-staff, and every
+ *   viewer sees the plain layout there.
  */
-export type AppFrameLayout = "top" | "left"
+export type AppFrameLayout = "top" | "left" | "plain"
 
 /** The school brand for {@link AppFrame}, or none. */
 export type AppFrameBrand =
@@ -140,15 +154,25 @@ export function AppFrame({
     return () => observer.disconnect()
   }, [layout])
 
-  if (!school && !nav) {
+  const colors = school ? frameColors(school.primaryColor, step) : unbrandedFrameColors()
+
+  if (layout === "plain" || (!school && !nav)) {
     return (
-      <div data-slot="app-frame" data-layout="plain" className="min-h-screen bg-background text-foreground">
+      <div
+        data-slot="app-frame"
+        data-layout="plain"
+        className="min-h-screen bg-(--frame-page) text-foreground"
+        style={{ "--frame-page": school ? plainPageColor(school.primaryColor, step) : colors.page } as CSSProperties}
+      >
+        {school ? (
+          <header className="flex h-14 items-center px-6">
+            <SchoolName school={school} />
+          </header>
+        ) : null}
         <main className={className}>{children}</main>
       </div>
     )
   }
-
-  const colors = school ? frameColors(school.primaryColor, step) : unbrandedFrameColors()
 
   const vars = {
     "--frame": colors.frame,
