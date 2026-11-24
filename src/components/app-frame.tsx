@@ -147,28 +147,27 @@ function useDarkMode() {
 
 function planKey(plan: FaviconPlan<LogoMeasurement>) {
   if (plan.kind === "logo") return `logo:${plan.logo.logo.src}:${plan.backing}`
-  if (plan.kind === "letter") return `letter:${plan.letter}:${plan.fill}:${plan.text}`
   return "mark"
 }
 
-async function drawWithFallback(plan: FaviconPlan<LogoMeasurement>, school: FrameSchool | undefined) {
+async function drawWithFallback(plan: FaviconPlan<LogoMeasurement>) {
   const href = await drawFavicon(plan)
-  if (href || plan.kind !== "logo" || !school) return href
-  return drawFavicon(faviconPlans<LogoMeasurement>(school, []).light)
+  if (href || plan.kind !== "logo") return href
+  return drawFavicon({ kind: "mark" })
 }
 
 function useFavicon(school: FrameSchool | undefined, measurements: Measurements | null): string | null {
   const dark = useDarkMode()
   const waiting = Boolean(school && school.logos.length > 0 && !measurements)
   const versions = school && measurements ? measuredLogos(school.logos, measurements) : []
-  const plans = waiting ? null : faviconPlans(school, versions)
+  const plans = waiting ? null : faviconPlans(versions)
   const plan = plans ? (dark ? plans.dark : plans.light) : null
   const key = plan ? planKey(plan) : null
   const [icon, setIcon] = useState<{ key: string; href: string | null } | null>(null)
   useEffect(() => {
     if (!plan || !key) return
     let current = true
-    drawWithFallback(plan, school).then((href) => {
+    drawWithFallback(plan).then((href) => {
       if (current) setIcon({ key, href })
     })
     return () => {

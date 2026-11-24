@@ -1,10 +1,7 @@
-import { readableText } from "./branding.js"
-import { normalizeHex } from "./color.js"
 import type { LogoTone, MeasuredLogo } from "./logo.js"
 
 const FAVICON_MAX_RATIO = 1.25
 const LIGHT_TONES: LogoTone[] = ["color", "black"]
-const GENERIC_WORDS = new Set(["the", "of", "and", "at", "university", "college", "institute", "school"])
 
 export interface FaviconLogo extends MeasuredLogo {
   round: boolean
@@ -14,7 +11,6 @@ export type FaviconBacking = "none" | "circle" | "square"
 
 export type FaviconPlan<T extends FaviconLogo = FaviconLogo> =
   | { kind: "logo"; logo: T; backing: FaviconBacking }
-  | { kind: "letter"; letter: string; fill: string; text: string }
   | { kind: "mark" }
 
 export interface FaviconPlans<T extends FaviconLogo = FaviconLogo> {
@@ -35,23 +31,11 @@ function mostSquare<T extends FaviconLogo>(versions: T[], tones: LogoTone[]): T 
   return null
 }
 
-export function faviconLetter(name: string): string {
-  const words = name.split(/\s+/).map((word) => word.replace(/[^\p{L}\p{N}]/gu, "")).filter(Boolean)
-  const word = words.find((w) => !GENERIC_WORDS.has(w.toLowerCase())) ?? words[0] ?? ""
-  return word.charAt(0).toUpperCase()
-}
+const MARK: FaviconPlans<never> = { light: { kind: "mark" }, dark: { kind: "mark" } }
 
-export function faviconPlans<T extends FaviconLogo>(
-  school: { name: string; main: string } | undefined,
-  versions: T[]
-): FaviconPlans<T> {
-  if (!school) return { light: { kind: "mark" }, dark: { kind: "mark" } }
+export function faviconPlans<T extends FaviconLogo>(versions: T[]): FaviconPlans<T> {
   const logo = mostSquare(versions, LIGHT_TONES)
-  if (!logo) {
-    const fill = normalizeHex(school.main)
-    const tile: FaviconPlan<T> = { kind: "letter", letter: faviconLetter(school.name), fill, text: readableText(fill) }
-    return { light: tile, dark: tile }
-  }
+  if (!logo) return MARK
   const white = mostSquare(versions, ["white"])
   return {
     light: { kind: "logo", logo, backing: "none" },

@@ -2,10 +2,9 @@ import type { FaviconBacking, FaviconPlan } from "./favicon.js"
 import { loadImage, type LogoMeasurement } from "./measure-logo.js"
 
 const ICON_SIZE = 64
-const TILE_RADIUS = 12
+const SQUARE_RADIUS = 12
 const SQUARE_INSET = 6
 const BACKING_COLOR = "#ffffff"
-const LETTER_FONT = "700 40px Roboto, system-ui, sans-serif"
 const MARK_BOUNDS = { x: 70, y: 60, width: 148, height: 169 }
 const MARK_SVG =
   `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${MARK_BOUNDS.x} ${MARK_BOUNDS.y} ${MARK_BOUNDS.width} ${MARK_BOUNDS.height}">` +
@@ -34,7 +33,7 @@ function drawBacking(context: CanvasRenderingContext2D, backing: FaviconBacking)
   context.fillStyle = BACKING_COLOR
   context.beginPath()
   if (backing === "circle") context.arc(ICON_SIZE / 2, ICON_SIZE / 2, ICON_SIZE / 2, 0, Math.PI * 2)
-  else context.roundRect(0, 0, ICON_SIZE, ICON_SIZE, TILE_RADIUS)
+  else context.roundRect(0, 0, ICON_SIZE, ICON_SIZE, SQUARE_RADIUS)
   context.fill()
 }
 
@@ -48,21 +47,6 @@ async function drawLogo(context: CanvasRenderingContext2D, logo: LogoMeasurement
   context.drawImage(image, ink.x - crop.x * width, ink.y - crop.y * height, width, height)
 }
 
-async function drawLetter(context: CanvasRenderingContext2D, letter: string, fill: string, text: string) {
-  await document.fonts?.ready
-  await document.fonts?.load(LETTER_FONT, letter)
-  context.fillStyle = fill
-  context.beginPath()
-  context.roundRect(0, 0, ICON_SIZE, ICON_SIZE, TILE_RADIUS)
-  context.fill()
-  context.fillStyle = text
-  context.font = LETTER_FONT
-  context.textAlign = "center"
-  context.textBaseline = "alphabetic"
-  const { actualBoundingBoxAscent: ascent, actualBoundingBoxDescent: descent } = context.measureText(letter)
-  context.fillText(letter, ICON_SIZE / 2, (ICON_SIZE + ascent - descent) / 2)
-}
-
 async function drawMark(context: CanvasRenderingContext2D) {
   const image = await loadImage(MARK_SRC)
   const box = fitted(MARK_BOUNDS.width / MARK_BOUNDS.height, ICON_SIZE)
@@ -74,7 +58,6 @@ export async function drawFavicon(plan: FaviconPlan<LogoMeasurement>): Promise<s
   if (!target) return null
   try {
     if (plan.kind === "logo") await drawLogo(target.context, plan.logo, plan.backing)
-    else if (plan.kind === "letter") await drawLetter(target.context, plan.letter, plan.fill, plan.text)
     else await drawMark(target.context)
     return target.element.toDataURL("image/png")
   } catch {

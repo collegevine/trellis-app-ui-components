@@ -28,9 +28,7 @@ vi.mock("../lib/draw-favicon.js", () => ({
     Promise.resolve(
       plan.kind === "logo"
         ? `icon:${plan.logo.logo.src}:${plan.backing}`
-        : plan.kind === "letter"
-          ? `icon:letter:${plan.letter}:${plan.fill}`
-          : "icon:mark"
+        : "icon:mark"
     ),
 }))
 
@@ -110,13 +108,13 @@ describe("AppFrame favicon", () => {
     expect(favicon()).toBe("icon:/seal.png:circle")
   })
 
-  it("shows a letter tile when every logo is wide, also on a form page with no frame", async () => {
+  it("shows the CollegeVine mark when every logo is wide, also on a form page with no frame", async () => {
     await render(
       <AppFrame school={{ ...monza, logos: [{ src: "/one-line.png" }] }} step="medium" layout="plain">
         <p>Form</p>
       </AppFrame>
     )
-    expect(favicon()).toBe("icon:letter:M:#7a1f2b")
+    expect(favicon()).toBe("icon:mark")
   })
 
   it("shows the CollegeVine mark in an app with no school brand", async () => {
