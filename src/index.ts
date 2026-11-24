@@ -35,3 +35,8 @@ export {
   type TabsProps,
   type TabsTriggerProps,
 } from "./components/tabs.js"
+export {
+  ContentColumn,
+  type ContentColumnProps,
+  type ContentColumnWidth,
+} from "./components/content-column.js"
