@@ -99,7 +99,8 @@ function SchoolName({ school }: { school: FrameSchool }) {
  *
  * - `low`: a very light gray frame around a white page.
  * - `medium`: a light frame in the hue of the school's primary color, around
- *   a white page.
+ *   a white page. A primary color close to gray, black or white gets the light
+ *   gray frame of the `low` level.
  * - `high`: the school's primary color around a white page.
  *
  * The selected nav item takes its fill from the frame, so it shows on every
