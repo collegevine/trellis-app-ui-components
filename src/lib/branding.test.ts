@@ -137,7 +137,7 @@ describe("plainPageColor", () => {
     expect(yellow.l).toBeGreaterThan(red.l + 0.005)
   })
 
-  it("gives a main color close to gray a warm tint", () => {
+  it("gives a primary color close to gray a warm tint", () => {
     expect(Math.abs(toOklch(plainPageColor("#333333", "high")).h - 97)).toBeLessThan(5)
   })
 })

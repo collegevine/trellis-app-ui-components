@@ -106,7 +106,7 @@ describe("AppFrame", () => {
 
   it("tints the form page in the school hue in the plain layout at the high level", () => {
     const html = render(<AppFrame school={northfield} step="high" layout="plain" />)
-    expect(html).toContain(`--frame-page:${plainPageColor(northfield.main, "high")}`)
+    expect(html).toContain(`--frame-page:${plainPageColor(northfield.primaryColor, "high")}`)
     expect(html).not.toContain("--frame-page:#ffffff")
     expect(html).not.toContain("--frame-page:#fafafa")
   })
