@@ -1,4 +1,5 @@
 import type { SchoolLogo } from "../components/app-frame.js"
+import { luminanceContrast, parseHex, rgbLuminance } from "./color.js"
 
 export interface LogoSpace {
   area: number
@@ -108,6 +109,30 @@ export function inkBounds(
   const tone: LogoTone =
     whiteInk / ink >= WHITE_SHARE ? "white" : blackInk / ink >= BLACK_SHARE ? "black" : "color"
   return { left, top, right, bottom, background, tone }
+}
+
+function isClear(pixels: Uint8ClampedArray, i: number, background: InkBounds["background"]) {
+  return channel(pixels, i + 3) <= CLEAR_ALPHA || (background !== null && distance(pixels, i, background) <= BACKGROUND_DISTANCE)
+}
+
+const DARK_TAB = "#35363a"
+const DARK_TAB_CONTRAST = 3
+const READABLE_SHARE = 0.5
+
+export function readsOnDark(pixels: Uint8ClampedArray, width: number, bounds: InkBounds) {
+  const tab = rgbLuminance(parseHex(DARK_TAB))
+  let ink = 0
+  let readable = 0
+  for (let y = bounds.top; y <= bounds.bottom; y++) {
+    for (let x = bounds.left; x <= bounds.right; x++) {
+      const i = (y * width + x) * 4
+      if (isClear(pixels, i, bounds.background)) continue
+      ink++
+      const color: [number, number, number] = [channel(pixels, i), channel(pixels, i + 1), channel(pixels, i + 2)]
+      if (luminanceContrast(rgbLuminance(color), tab) >= DARK_TAB_CONTRAST) readable++
+    }
+  }
+  return ink > 0 && readable / ink >= READABLE_SHARE
 }
 
 export function logoSize(ratio: number, space: LogoSpace): LogoSize {
