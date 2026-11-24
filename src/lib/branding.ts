@@ -176,12 +176,6 @@ const PLAIN_PAGE_TINT_LIGHTNESS = 0.98
 const YELLOW_PLAIN_PAGE_TINT_LIGHTNESS = 0.9885
 const PLAIN_PAGE_TINT_STRENGTH = 0.0138
 
-const WARM_NEUTRAL_HUE = 97
-
-function schoolHue(mainColor: string): number {
-  return isNeutral(mainColor) ? WARM_NEUTRAL_HUE : toOklch(mainColor).h
-}
-
 function hueFrame(mainColor: string): Pick<FrameColors, "frame" | "navSelected" | "navHover"> {
   const hue = toOklch(mainColor).h
   const lightness = isYellowHue(hue) ? YELLOW_HUE_FRAME_LIGHTNESS : HUE_FRAME_LIGHTNESS
@@ -240,8 +234,9 @@ export function frameColors(color: string, step: BrandingStep): FrameColors {
 
 export function plainPageColor(color: string, step: BrandingStep): string {
   if (step === "low") return PAGE
-  if (step === "medium") return NEUTRAL_PAGE
-  const hue = schoolHue(normalizeHex(color))
+  const primary = normalizeHex(color)
+  if (step === "medium" || isNeutral(primary)) return NEUTRAL_PAGE
+  const hue = toOklch(primary).h
   const lightness = isYellowHue(hue) ? YELLOW_PLAIN_PAGE_TINT_LIGHTNESS : PLAIN_PAGE_TINT_LIGHTNESS
   return fromOklch({ l: lightness, c: PLAIN_PAGE_TINT_STRENGTH, h: hue })
 }

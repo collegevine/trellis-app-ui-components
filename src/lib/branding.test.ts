@@ -137,8 +137,12 @@ describe("plainPageColor", () => {
     expect(yellow.l).toBeGreaterThan(red.l + 0.005)
   })
 
-  it("gives a primary color close to gray a warm tint", () => {
-    expect(Math.abs(toOklch(plainPageColor("#333333", "high")).h - 97)).toBeLessThan(5)
+  it.each([
+    ["dark gray", "#333333"],
+    ["black", "#000000"],
+    ["white", "#ffffff"],
+  ])("gives a page with no frame the light gray of the medium level for a %s primary color", (_, color) => {
+    expect(plainPageColor(color, "high")).toBe(plainPageColor(color, "medium"))
   })
 })
 
