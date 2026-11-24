@@ -7,9 +7,9 @@ import { contrastRatio, fromOklch, normalizeHex, toOklch } from "./color.js"
  *   appears in the logo. Selected controls keep the neutral look.
  * - `medium`: a light frame in the hue of the school's primary color, around
  *   a white page. Every school gets the same lightness and the same small
- *   amount of color, and a primary color close to gray, black or white gets a
- *   warm neutral. Selected controls take the school's primary color when it
- *   stands out from the page (see {@link selectedFill}).
+ *   amount of color. A primary color close to gray, black or white has no hue
+ *   to show, so it gets the light gray frame of the `low` level. Selected
+ *   controls take the school's primary color when it stands out from the page (see {@link selectedFill}).
  * - `high`: the school's primary color as the frame, around a white
  *   page. The logo shows in white. Selected controls take the school's primary
  *   color when it stands out from the page.
@@ -168,7 +168,6 @@ const LIGHT_GRAY_FRAME = HUELESS_NEUTRALS["--muted"]
 const HUE_FRAME_LIGHTNESS = 0.9625
 const YELLOW_HUE_FRAME_LIGHTNESS = 0.98
 const HUE_FRAME_STRENGTH = 0.0159
-const WARM_NEUTRAL_HUE = 97
 
 function isYellowHue(hue: number): boolean {
   return hue >= 105 && hue < 125
@@ -178,12 +177,8 @@ const PLAIN_PAGE_TINT_LIGHTNESS = 0.98
 const YELLOW_PLAIN_PAGE_TINT_LIGHTNESS = 0.9885
 const PLAIN_PAGE_TINT_STRENGTH = 0.0138
 
-function schoolHue(mainColor: string): number {
-  return isNeutral(mainColor) ? WARM_NEUTRAL_HUE : toOklch(mainColor).h
-}
-
 function hueFrame(mainColor: string): Pick<FrameColors, "frame" | "navSelected" | "navHover"> {
-  const hue = schoolHue(mainColor)
+  const hue = toOklch(mainColor).h
   const lightness = isYellowHue(hue) ? YELLOW_HUE_FRAME_LIGHTNESS : HUE_FRAME_LIGHTNESS
   const shade = (darker: number, strength: number) =>
     fromOklch({ l: lightness - darker, c: HUE_FRAME_STRENGTH * strength, h: hue })
@@ -221,7 +216,7 @@ export function frameColors(color: string, step: BrandingStep): FrameColors {
       logo: frameText === LIGHT_TEXT ? "white" : "black",
     }
   }
-  if (step === "medium") {
+  if (step === "medium" && !isNeutral(mainColor)) {
     return {
       ...hueFrame(mainColor),
       frameText: DARK_TEXT,
@@ -243,8 +238,9 @@ export function frameColors(color: string, step: BrandingStep): FrameColors {
 
 export function plainPageColor(color: string, step: BrandingStep): string {
   if (step === "low") return PAGE
-  if (step === "medium") return NEUTRAL_PAGE
-  const hue = schoolHue(normalizeHex(color))
+  const primary = normalizeHex(color)
+  if (step === "medium" || isNeutral(primary)) return NEUTRAL_PAGE
+  const hue = toOklch(primary).h
   const lightness = isYellowHue(hue) ? YELLOW_PLAIN_PAGE_TINT_LIGHTNESS : PLAIN_PAGE_TINT_LIGHTNESS
   return fromOklch({ l: lightness, c: PLAIN_PAGE_TINT_STRENGTH, h: hue })
 }
