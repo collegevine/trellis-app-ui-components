@@ -11,7 +11,7 @@ import {
   type FrameColors,
 } from "../lib/branding.js"
 import { logoSize, type LogoSpace } from "../lib/logo.js"
-import { measureLogo, type LogoMeasurement } from "../lib/measure-logo.js"
+import { analyzeLogo, type LogoAnalysis } from "../lib/analyze-logo.js"
 import { cn } from "../lib/utils.js"
 
 /** One version of a school logo, such as the one-line logo, the stacked logo or the white logo. */
@@ -101,41 +101,41 @@ const LEFT_NAV: LogoSpace = { area: 3920, minHeight: 16, maxHeight: 32, maxWidth
 const PHONE_BAR: LogoSpace = { area: 3920, minHeight: 16, maxHeight: 32, maxWidth: 220 }
 const ABOVE_PAGE: LogoSpace = { area: 5120, minHeight: 18, maxHeight: 44, maxWidth: 320 }
 
-type Measurements = Map<string, LogoMeasurement | null>
+type LogoAnalyses = Map<string, LogoAnalysis | null>
 
-function useLogoMeasurements(logos: SchoolLogo[]): Measurements | null {
+function useLogoAnalyses(logos: SchoolLogo[]): LogoAnalyses | null {
   const key = logos.map((logo) => logo.src).join("\n")
-  const [measurements, setMeasurements] = useState<{ key: string; value: Measurements } | null>(null)
+  const [analyses, setAnalyses] = useState<{ key: string; value: LogoAnalyses } | null>(null)
   useEffect(() => {
     let current = true
-    Promise.all(logos.map((logo) => measureLogo(logo))).then((results) => {
+    Promise.all(logos.map((logo) => analyzeLogo(logo))).then((results) => {
       if (!current) return
-      setMeasurements({ key, value: new Map(logos.map((logo, i) => [logo.src, results[i] ?? null])) })
+      setAnalyses({ key, value: new Map(logos.map((logo, i) => [logo.src, results[i] ?? null])) })
     })
     return () => {
       current = false
     }
   }, [key])
-  return measurements?.key === key ? measurements.value : null
+  return analyses?.key === key ? analyses.value : null
 }
 
 function Logo({
   school,
   look,
   space,
-  measurements,
+  analyses,
 }: {
   school: FrameSchool
   look: FrameColors["logo"]
   space: LogoSpace
-  measurements: Measurements | null
+  analyses: LogoAnalyses | null
 }) {
   const logo = school.logos[0]
   if (!logo) return null
   const filter = look === "white" ? WHITE_LOGO : look === "black" ? BLACK_LOGO : undefined
   const name = logo.showsName ? null : <span className="truncate text-sm font-semibold">{school.name}</span>
-  const measured = measurements?.get(logo.src)
-  if (!measured) {
+  const analysis = analyses?.get(logo.src)
+  if (!analysis) {
     return (
       <span className="flex min-w-0 items-center gap-2.5">
         <img
@@ -143,14 +143,14 @@ function Logo({
           src={logo.src}
           alt={`${school.name} logo`}
           className="h-7 w-auto shrink-0"
-          style={{ filter, visibility: measurements ? undefined : "hidden" }}
+          style={{ filter, visibility: analyses ? undefined : "hidden" }}
         />
         {name}
       </span>
     )
   }
-  const { width, height } = logoSize(measured.ratio, space)
-  const { crop } = measured
+  const { width, height } = logoSize(analysis.ratio, space)
+  const { crop } = analysis
   return (
     <span className="flex min-w-0 items-center gap-2.5">
       <span className="relative block shrink-0 overflow-hidden" style={{ width, height }}>
@@ -252,9 +252,9 @@ export function AppFrame({
 
   const colors = school ? frameColors(school.primaryColor, step) : unbrandedFrameColors()
   const hasLogo = Boolean(school && school.logos.length > 0)
-  const measurements = useLogoMeasurements(school?.logos ?? [])
+  const analyses = useLogoAnalyses(school?.logos ?? [])
   const logoIn = (space: LogoSpace, look: FrameColors["logo"] = colors.logo) =>
-    school ? <Logo school={school} look={look} space={space} measurements={measurements} /> : null
+    school ? <Logo school={school} look={look} space={space} analyses={analyses} /> : null
   const schoolName = school ? <span className="min-w-0 truncate text-sm font-semibold">{school.name}</span> : null
   const identityIn = (logo: ReactNode) => (hasLogo ? logo : schoolName)
 
