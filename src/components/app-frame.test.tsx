@@ -7,15 +7,15 @@ import { AppFrame, AppFrameNavLink, type FrameSchool } from "./app-frame.js"
 
 const northfield: FrameSchool = {
   name: "Northfield University",
-  main: "#003da5",
+  primaryColor: "#003da5",
   logos: [{ src: "/logos/northfield.svg" }, { src: "/logos/northfield-white.svg" }],
 }
 
-const noLogo: FrameSchool = { name: "Monza University", main: "#7a1f2b", logos: [] }
+const noLogo: FrameSchool = { name: "Monza University", primaryColor: "#7a1f2b", logos: [] }
 
 const redmond: FrameSchool = {
   name: "Redmond State University",
-  main: "#c41230",
+  primaryColor: "#c41230",
   logos: [{ src: "/logos/redmond.svg", showsName: true }],
 }
 
@@ -92,7 +92,7 @@ describe("AppFrame", () => {
 
   it("sets the frame colors for the step", () => {
     const html = render(<AppFrame school={northfield} step="medium" />)
-    expect(html).toContain(`--frame:${frameColors(northfield.main, "medium").frame}`)
+    expect(html).toContain(`--frame:${frameColors(northfield.primaryColor, "medium").frame}`)
     expect(html).toContain('data-step="medium"')
   })
 
@@ -156,7 +156,7 @@ describe("AppFrame", () => {
 
   it("tints the form page in the school hue in the plain layout at the high level", () => {
     const html = render(<AppFrame school={northfield} step="high" layout="plain" />)
-    expect(html).toContain(`--frame-page:${plainPageColor(northfield.main, "high")}`)
+    expect(html).toContain(`--frame-page:${plainPageColor(northfield.primaryColor, "high")}`)
     expect(html).not.toContain("--frame-page:#ffffff")
     expect(html).not.toContain("--frame-page:#fafafa")
   })
