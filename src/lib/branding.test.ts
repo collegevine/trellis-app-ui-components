@@ -29,8 +29,8 @@ describe("defaultBrandingStep", () => {
 describe("color values in the output", () => {
   it("writes every school color as a six-digit hex value that CSS accepts", () => {
     expect(frameColors("F00", "high").frame).toBe("#ff0000")
-    expect(schoolTheme({ main: "F00" }, "medium")["--school-selected"]).toBe("#ff0000")
-    expect(schoolTheme({ main: "F00" }, "medium")["--school-main"]).toBe("#ff0000")
+    expect(schoolTheme({ primaryColor: "F00" }, "medium")["--school-selected"]).toBe("#ff0000")
+    expect(schoolTheme({ primaryColor: "F00" }, "medium")["--school-main"]).toBe("#ff0000")
   })
 })
 
@@ -55,25 +55,25 @@ describe("readableText", () => {
 })
 
 describe("selectedFill", () => {
-  it("fills selected controls with the main school color", () => {
-    expect(selectedFill({ main: "#003da5" })).toEqual({ fill: "#003da5", text: "#ffffff" })
+  it("fills selected controls with the school's primary color", () => {
+    expect(selectedFill({ primaryColor: "#003da5" })).toEqual({ fill: "#003da5", text: "#ffffff" })
   })
 
-  it("picks dark text on a light main color that still passes", () => {
-    expect(selectedFill({ main: "#ed2b74" })).toEqual({ fill: "#ed2b74", text: "#111111" })
+  it("picks dark text on a light primary color that still passes", () => {
+    expect(selectedFill({ primaryColor: "#ed2b74" })).toEqual({ fill: "#ed2b74", text: "#111111" })
   })
 
   it.each(["#ffffff", "#ffcd00", "#00b140", "#ff671d"])(
-    "keeps the neutral look when the main color has less than 3:1 contrast with the page (%s)",
-    (main) => {
-      expect(selectedFill({ main })).toBeNull()
+    "keeps the neutral look when the primary color has less than 3:1 contrast with the page (%s)",
+    (primaryColor) => {
+      expect(selectedFill({ primaryColor })).toBeNull()
     }
   )
 })
 
 describe("schoolTheme", () => {
-  it("sets the main color, its text and the selected fill", () => {
-    const theme = schoolTheme({ main: "#003da5" }, "medium")
+  it("sets the primary color, its text and the selected fill", () => {
+    const theme = schoolTheme({ primaryColor: "#003da5" }, "medium")
     expect(theme["--school-main"]).toBe("#003da5")
     expect(theme["--school-main-foreground"]).toBe("#ffffff")
     expect(theme["--school-selected"]).toBe("#003da5")
@@ -81,14 +81,14 @@ describe("schoolTheme", () => {
   })
 
   it("leaves out the selected fill at the low level", () => {
-    const theme = schoolTheme({ main: "#003da5" }, "low")
+    const theme = schoolTheme({ primaryColor: "#003da5" }, "low")
     expect(theme).not.toHaveProperty("--school-selected")
     expect(theme).not.toHaveProperty("--school-selected-foreground")
     expect(theme["--school-main"]).toBe("#003da5")
   })
 
   it("sets the school chart colors at the tinted and full-color steps, and leaves them out at the neutral step", () => {
-    const colors = { main: "#c41230", second: "#0b5394" }
+    const colors = { primaryColor: "#c41230", secondaryColor: "#0b5394" }
     expect(schoolTheme(colors, "medium")).toMatchObject({ "--chart-1": "#c41230", "--chart-2": "#0b5394" })
     expect(schoolTheme(colors, "high")).toMatchObject({ "--chart-1": "#c41230", "--chart-2": "#0b5394" })
     expect(schoolTheme(colors, "low")).not.toHaveProperty("--chart-1")
@@ -96,26 +96,26 @@ describe("schoolTheme", () => {
   })
 
   it("fills all five chart colors when a school color passes", () => {
-    const theme = schoolTheme({ main: "#c41230" }, "medium")
+    const theme = schoolTheme({ primaryColor: "#c41230" }, "medium")
     for (const index of [1, 2, 3, 4, 5]) expect(theme).toHaveProperty(`--chart-${index}`)
   })
 
   it("leaves the chart colors to the theme when no school color passes", () => {
-    expect(schoolTheme({ main: "#333333" }, "medium")).not.toHaveProperty("--chart-1")
+    expect(schoolTheme({ primaryColor: "#333333" }, "medium")).not.toHaveProperty("--chart-1")
   })
 
   it("sets the selected fill at the high level", () => {
-    expect(schoolTheme({ main: "#003da5" }, "high")["--school-selected"]).toBe("#003da5")
+    expect(schoolTheme({ primaryColor: "#003da5" }, "high")["--school-selected"]).toBe("#003da5")
   })
 
   it("leaves out the selected fill when selected controls stay neutral", () => {
-    const theme = schoolTheme({ main: "#ffffff" }, "medium")
+    const theme = schoolTheme({ primaryColor: "#ffffff" }, "medium")
     expect(theme).not.toHaveProperty("--school-selected")
     expect(theme).not.toHaveProperty("--school-selected-foreground")
   })
 
   it("replaces the warm neutrals with neutrals that have no hue", () => {
-    const theme = schoolTheme({ main: "#003da5" }, "medium")
+    const theme = schoolTheme({ primaryColor: "#003da5" }, "medium")
     for (const name of ["--background", "--muted", "--secondary", "--border", "--input"]) {
       const value = theme[name]
       expect(value, name).toMatch(/^#([0-9a-f]{2})\1\1$/)
@@ -123,7 +123,7 @@ describe("schoolTheme", () => {
   })
 
   it("leaves buttons, the error red, the focus outline and the radius alone", () => {
-    const theme = schoolTheme({ main: "#c41230" }, "medium")
+    const theme = schoolTheme({ primaryColor: "#c41230" }, "medium")
     for (const name of ["--primary", "--primary-foreground", "--destructive", "--ring", "--radius"]) {
       expect(theme).not.toHaveProperty(name)
     }
@@ -154,13 +154,13 @@ describe("plainPageColor", () => {
     expect(yellow.l).toBeGreaterThan(red.l + 0.005)
   })
 
-  it("gives a main color close to gray a warm tint", () => {
+  it("gives a primary color close to gray a warm tint", () => {
     expect(Math.abs(toOklch(plainPageColor("#333333", "high")).h - 97)).toBeLessThan(5)
   })
 })
 
 describe("frameColors", () => {
-  it("draws the full-color frame in the main color, around a white page", () => {
+  it("draws the full-color frame in the primary color, around a white page", () => {
     const colors = frameColors("#c41230", "high")
     expect(colors.frame).toBe("#c41230")
     expect(colors.frameText).toBe("#ffffff")
@@ -211,7 +211,7 @@ describe("frameColors at the tinted step", () => {
     return Math.min(gap, 360 - gap)
   }
 
-  it.each(schools.filter(([name]) => name !== "Ridgeline gold"))("draws the frame for %s in the hue of the main color", (_, main) => {
+  it.each(schools.filter(([name]) => name !== "Ridgeline gold"))("draws the frame for %s in the hue of the primary color", (_, main) => {
     const frame = toOklch(frameColors(main, "medium").frame)
     expect(hueGap(frame.h, toOklch(main).h)).toBeLessThan(6)
   })
@@ -235,7 +235,7 @@ describe("frameColors at the tinted step", () => {
     ["dark gray", "#333333"],
     ["black", "#000000"],
     ["white", "#ffffff"],
-  ])("draws a warm frame for a %s main color", (_, main) => {
+  ])("draws a warm frame for a %s primary color", (_, main) => {
     const frame = toOklch(frameColors(main, "medium").frame)
     expect(frame.c).toBeGreaterThan(0.014)
     expect(hueGap(frame.h, 97)).toBeLessThan(6)

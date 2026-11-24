@@ -10,51 +10,51 @@ const hueGap = (first: number, second: number) => {
 
 describe("chartColors", () => {
   it("opens with the primary color, then the secondary color", () => {
-    const colors = chartColors({ main: "#c41230", second: "#0b5394" })
+    const colors = chartColors({ primaryColor: "#c41230", secondaryColor: "#0b5394" })
     expect(colors.slice(0, 2)).toEqual(["#c41230", "#0b5394"])
   })
 
   it("fills five series", () => {
-    expect(chartColors({ main: "#c41230", second: "#0b5394" })).toHaveLength(5)
+    expect(chartColors({ primaryColor: "#c41230", secondaryColor: "#0b5394" })).toHaveLength(5)
   })
 
   it("gives the same colors every time", () => {
-    expect(chartColors({ main: "#5f249f" })).toEqual(chartColors({ main: "#5f249f" }))
+    expect(chartColors({ primaryColor: "#5f249f" })).toEqual(chartColors({ primaryColor: "#5f249f" }))
   })
 
   it("keeps a yellow primary color that reaches 1.5:1 with the chart", () => {
-    expect(chartColors({ main: "#ffcd00" })[0]).toBe("#ffcd00")
+    expect(chartColors({ primaryColor: "#ffcd00" })[0]).toBe("#ffcd00")
   })
 
   it("leaves out a secondary color that people cannot tell from the primary color", () => {
-    const colors = chartColors({ main: "#c41230", second: "#b3082d" })
+    const colors = chartColors({ primaryColor: "#c41230", secondaryColor: "#b3082d" })
     expect(colors[0]).toBe("#c41230")
     expect(colors).not.toContain("#b3082d")
   })
 
   it("moves the secondary color first when the primary color looks gray", () => {
-    expect(chartColors({ main: "#333333", second: "#0b5394" })[0]).toBe("#0b5394")
+    expect(chartColors({ primaryColor: "#333333", secondaryColor: "#0b5394" })[0]).toBe("#0b5394")
   })
 
   it.each(["#333333", "#000000", "#fff8dc"])(
     "returns no colors when no school color passes (%s)",
-    (main) => {
-      expect(chartColors({ main })).toEqual([])
+    (primaryColor) => {
+      expect(chartColors({ primaryColor })).toEqual([])
     }
   )
 
   it.each([
-    { main: "#c41230", second: "#0b5394" },
-    { main: "#ffcd00", second: "#000000" },
-    { main: "#00b140" },
-    { main: "#5f249f", second: "#331467" },
+    { primaryColor: "#c41230", secondaryColor: "#0b5394" },
+    { primaryColor: "#ffcd00", secondaryColor: "#000000" },
+    { primaryColor: "#00b140" },
+    { primaryColor: "#5f249f", secondaryColor: "#331467" },
   ])("generates colors with 3:1 contrast, away from the school hues and out of yellow (%o)", (school) => {
-    const schoolHues = [school.main, school.second]
+    const schoolHues = [school.primaryColor, school.secondaryColor]
       .filter((color): color is string => color !== undefined)
       .map(toOklch)
       .filter((tone) => tone.c >= 0.05)
       .map((tone) => tone.h)
-    const generated = chartColors(school).filter((color) => color !== school.main && color !== school.second)
+    const generated = chartColors(school).filter((color) => color !== school.primaryColor && color !== school.secondaryColor)
     expect(generated.length).toBeGreaterThan(0)
     for (const color of generated) {
       expect(contrastRatio(color, "#ffffff")).toBeGreaterThanOrEqual(3)
