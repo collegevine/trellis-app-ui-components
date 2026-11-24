@@ -1,11 +1,14 @@
 import type { SchoolLogo } from "../components/app-frame.js"
 
+export type LogoTone = "white" | "black" | "color"
+
 export interface InkBounds {
   left: number
   top: number
   right: number
   bottom: number
   background: [number, number, number] | null
+  tone: LogoTone
 }
 
 export interface Crop {
@@ -18,11 +21,17 @@ export interface Crop {
 export interface LogoAnalysis {
   logo: SchoolLogo
   ratio: number
+  tone: LogoTone
   crop: Crop
+  cleanSrc: string | null
 }
 
 const CLEAR_ALPHA = 12
 const BACKGROUND_DISTANCE = 36
+const WHITE_CHANNEL = 180
+const WHITE_SHARE = 0.5
+const BLACK_CHANNEL = 80
+const BLACK_SHARE = 0.7
 const RASTER_HEIGHT = 400
 const MAX_RASTER_WIDTH = 8000
 const cache = new Map<string, Promise<LogoAnalysis | null>>()
@@ -51,6 +60,12 @@ function solidCorner(pixels: Uint8ClampedArray, width: number, height: number): 
   return same ? color : null
 }
 
+function clearBackground(pixels: Uint8ClampedArray, background: [number, number, number]) {
+  for (let i = 0; i < pixels.length; i += 4) {
+    if (distance(pixels, i, background) <= BACKGROUND_DISTANCE) pixels[i + 3] = 0
+  }
+}
+
 export function inkBounds(
   pixels: Uint8ClampedArray,
   width: number,
@@ -62,11 +77,17 @@ export function inkBounds(
   let bottom = -1
   let left = width
   let right = -1
+  let ink = 0
+  let whiteInk = 0
+  let blackInk = 0
   for (let y = 0; y < height; y++) {
     for (let x = 0; x < width; x++) {
       const i = (y * width + x) * 4
       if (channel(pixels, i + 3) <= CLEAR_ALPHA) continue
       if (background && distance(pixels, i, background) <= BACKGROUND_DISTANCE) continue
+      ink++
+      if (Math.min(channel(pixels, i), channel(pixels, i + 1), channel(pixels, i + 2)) > WHITE_CHANNEL) whiteInk++
+      if (Math.max(channel(pixels, i), channel(pixels, i + 1), channel(pixels, i + 2)) < BLACK_CHANNEL) blackInk++
       if (y < top) top = y
       if (y > bottom) bottom = y
       if (x < left) left = x
@@ -74,7 +95,9 @@ export function inkBounds(
     }
   }
   if (bottom < 0) return null
-  return { left, top, right, bottom, background }
+  const tone: LogoTone =
+    whiteInk / ink >= WHITE_SHARE ? "white" : blackInk / ink >= BLACK_SHARE ? "black" : "color"
+  return { left, top, right, bottom, background, tone }
 }
 
 function isSvg(src: string) {
@@ -131,15 +154,27 @@ export function analyzeLogo(logo: SchoolLogo): Promise<LogoAnalysis | null> {
       if (!bounds) return null
       const inkWidth = bounds.right - bounds.left + 1
       const inkHeight = bounds.bottom - bounds.top + 1
+      let cleanSrc: string | null = null
+      if (bounds.background) {
+        const cropped = context.getImageData(bounds.left, bounds.top, inkWidth, inkHeight)
+        clearBackground(cropped.data, bounds.background)
+        const out = document.createElement("canvas")
+        out.width = inkWidth
+        out.height = inkHeight
+        out.getContext("2d")?.putImageData(cropped, 0, 0)
+        cleanSrc = out.toDataURL("image/png")
+      }
       return {
         logo,
         ratio: inkWidth / inkHeight,
+        tone: bounds.tone,
         crop: {
           x: bounds.left / width,
           y: bounds.top / height,
           width: inkWidth / width,
           height: inkHeight / height,
         },
+        cleanSrc,
       }
     })().catch(() => null)
     cache.set(logo.src, pending)

@@ -10,7 +10,7 @@ import {
   type BrandingStep,
   type FrameColors,
 } from "../lib/branding.js"
-import { logoSize, type LogoSpace } from "../lib/logo.js"
+import { pickLogo, type LogoSpace } from "../lib/logo.js"
 import { analyzeLogo, type LogoAnalysis } from "../lib/analyze-logo.js"
 import { cn } from "../lib/utils.js"
 
@@ -32,10 +32,12 @@ export interface FrameSchool {
   /** The school's primary color, as a hex value. */
   primaryColor: string
   /**
-   * Every version of the school logo that the app has. The frame shows the
-   * first one. It removes the empty space around the logo and sizes it so that
-   * a wide logo and a compact logo cover about the same area. The full-color
-   * frame turns it white, or black when the school color is light.
+   * Every version of the school logo that the app has, in any order. The frame
+   * removes the empty space around each logo and sizes each one so that a wide
+   * logo and a compact logo cover about the same area. In each place, it shows
+   * the widest version that is still large enough to read, so a one-line logo
+   * gives way to a stacked logo where space is short. The full-color frame
+   * shows a white version, or turns another version white when there is none.
    */
   logos: SchoolLogo[]
 }
@@ -131,12 +133,20 @@ function Logo({
   space: LogoSpace
   analyses: LogoAnalyses | null
 }) {
-  const logo = school.logos[0]
+  const versions = analyses
+    ? school.logos.flatMap((logo) => {
+        const analysis = analyses.get(logo.src)
+        return analysis ? [analysis] : []
+      })
+    : []
+  const choice = pickLogo(versions, space, look)
+  const fallback = school.logos[0]
+  const logo = choice?.logo ?? fallback
   if (!logo) return null
-  const filter = look === "white" ? WHITE_LOGO : look === "black" ? BLACK_LOGO : undefined
+  const recolor = choice ? choice.recolor : look !== "original"
+  const filter = recolor ? (look === "white" ? WHITE_LOGO : BLACK_LOGO) : undefined
   const name = logo.showsName ? null : <span className="truncate text-sm font-semibold">{school.name}</span>
-  const analysis = analyses?.get(logo.src)
-  if (!analysis) {
+  if (!choice) {
     return (
       <span className="flex min-w-0 items-center gap-2.5">
         <img
@@ -150,25 +160,36 @@ function Logo({
       </span>
     )
   }
-  const { width, height } = logoSize(analysis.ratio, space)
-  const { crop } = analysis
+  const { width, height } = choice.size
+  const { crop, cleanSrc } = choice.analysis
+  const image = cleanSrc ? (
+    <img
+      data-slot="app-frame-logo"
+      src={cleanSrc}
+      alt={`${school.name} logo`}
+      className="block shrink-0"
+      style={{ width, height, filter }}
+    />
+  ) : (
+    <span className="relative block shrink-0 overflow-hidden" style={{ width, height }}>
+      <img
+        data-slot="app-frame-logo"
+        src={logo.src}
+        alt={`${school.name} logo`}
+        className="absolute max-w-none"
+        style={{
+          width: width / crop.width,
+          height: height / crop.height,
+          left: -(crop.x * width) / crop.width,
+          top: -(crop.y * height) / crop.height,
+          filter,
+        }}
+      />
+    </span>
+  )
   return (
     <span className="flex min-w-0 items-center gap-2.5">
-      <span className="relative block shrink-0 overflow-hidden" style={{ width, height }}>
-        <img
-          data-slot="app-frame-logo"
-          src={logo.src}
-          alt={`${school.name} logo`}
-          className="absolute max-w-none"
-          style={{
-            width: width / crop.width,
-            height: height / crop.height,
-            left: -(crop.x * width) / crop.width,
-            top: -(crop.y * height) / crop.height,
-            filter,
-          }}
-        />
-      </span>
+      {image}
       {name}
     </span>
   )
@@ -209,7 +230,7 @@ function Logo({
  * @example
  * ```tsx
  * <AppFrame
- *   school={{ name: "Northfield University", primaryColor: brand.primaryColor, logos: brand.logos }}
+ *   school={{ name: "Monza University", primaryColor: brand.primaryColor, logos: brand.logos }}
  *   step={defaultBrandingStep("staff")}
  *   appName="Admissions dashboard"
  *   nav={
