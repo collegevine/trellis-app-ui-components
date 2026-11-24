@@ -5,13 +5,13 @@ import { contrastRatio, fromOklch, normalizeHex, toOklch } from "./color.js"
  *
  * - `low`: a very light gray frame around a white page. The school color
  *   appears in the logo. Selected controls keep the neutral look.
- * - `medium`: a light frame in the hue of the main school color, around
+ * - `medium`: a light frame in the hue of the school's primary color, around
  *   a white page. Every school gets the same lightness and the same small
- *   amount of color, and a main color close to gray, black or white gets a
- *   warm neutral. Selected controls take the main school color when it
+ *   amount of color, and a primary color close to gray, black or white gets a
+ *   warm neutral. Selected controls take the school's primary color when it
  *   stands out from the page (see {@link selectedFill}).
- * - `high`: the main school color as the frame, around a white
- *   page. The logo shows in white. Selected controls take the main school
+ * - `high`: the school's primary color as the frame, around a white
+ *   page. The logo shows in white. Selected controls take the school's primary
  *   color when it stands out from the page.
  */
 export type BrandingStep = "low" | "medium" | "high"
@@ -25,8 +25,8 @@ export const BRANDING_STEPS: readonly BrandingStep[] = [
 
 /** A school's brand colors, as hex values. */
 export interface SchoolColors {
-  /** The main school color, such as `#003da5`. */
-  main: string
+  /** The school's primary color, such as `#003da5`. */
+  primaryColor: string
 }
 
 const DARK_TEXT = "#111111"
@@ -88,13 +88,13 @@ export interface Fill {
  * the selected day in a date picker. Tabs, segmented controls and filters keep
  * the neutral look.
  *
- * The fill is the main school color. A selected control must stand out from
- * the white page, so when the main color has less than 3:1 contrast with
+ * The fill is the school's primary color. A selected control must stand out from
+ * the white page, so when the primary color has less than 3:1 contrast with
  * white, the result is `null` and selected controls keep the neutral look.
- * Yellow, bright green and bright orange main colors fall in that range.
+ * Yellow, bright green and bright orange primary colors fall in that range.
  */
 export function selectedFill(colors: SchoolColors): Fill | null {
-  const main = normalizeHex(colors.main)
+  const main = normalizeHex(colors.primaryColor)
   if (contrastRatio(main, PAGE) < SELECTED_CONTRAST) return null
   return { fill: main, text: readableText(main) }
 }
@@ -118,11 +118,11 @@ const HUELESS_NEUTRALS = {
  *
  * - The neutrals lose their warm hue, because warm grays can clash with a
  *   cool school color such as navy.
- * - `--school-main` and `--school-main-foreground`: the main school color and
+ * - `--school-main` and `--school-main-foreground`: the school's primary color and
  *   the text that goes on it.
  * - `--school-selected` and `--school-selected-foreground`: the fill for
  *   selected controls and its text (see {@link selectedFill}). They are left
- *   out at the `low` level, and when the main color is too light for
+ *   out at the `low` level, and when the primary color is too light for
  *   the page, so selected controls keep the neutral look.
  *
  * Buttons, the error red, the focus outline and the corner radius stay
@@ -131,15 +131,15 @@ const HUELESS_NEUTRALS = {
  * @example
  * ```tsx
  * // app/root.tsx
- * <html lang="en" style={schoolTheme({ main: "#003da5" }, "medium")}>
+ * <html lang="en" style={schoolTheme({ primaryColor: "#003da5" }, "medium")}>
  * ```
  */
 export function schoolTheme(colors: SchoolColors, step: BrandingStep): Record<string, string> {
   const selected = step === "low" ? null : selectedFill(colors)
   return {
     ...HUELESS_NEUTRALS,
-    "--school-main": normalizeHex(colors.main),
-    "--school-main-foreground": readableText(colors.main),
+    "--school-main": normalizeHex(colors.primaryColor),
+    "--school-main-foreground": readableText(colors.primaryColor),
     ...(selected
       ? {
           "--school-selected": selected.fill,
@@ -203,7 +203,7 @@ function darken(color: string, percent: number): string {
 }
 
 /**
- * The colors of the app frame for a main school color at one level of the
+ * The colors of the app frame for a primary color at one level of the
  * branding scale. The selected nav item takes its fill from the frame, so it
  * shows on every frame, even where the school color matches the frame.
  */

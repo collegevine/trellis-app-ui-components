@@ -27,8 +27,8 @@ export interface SchoolLogo {
 export interface FrameSchool {
   /** The school's name, used next to the logo, in the logo's text alternative, and in place of the logo when the school has none. */
   name: string
-  /** The main school color, as a hex value. */
-  main: string
+  /** The school's primary color, as a hex value. */
+  primaryColor: string
   /**
    * Every version of the school logo that the app has. The frame shows the
    * first one at a fixed height. The full-color frame turns it white, or black
@@ -46,7 +46,7 @@ export interface FrameSchool {
  *   the app name.
  * - `plain`: no frame. The logo sits above the page. With a school brand, the
  *   page is white at the `low` level, a light gray at the
- *   `medium` level, and a very light tint in the hue of the main school
+ *   `medium` level, and a very light tint in the hue of the school's primary
  *   color at the `high` level. Use the plain layout on a page where a user
  *   fills out a form and sees nothing else of the app. The frame is for
  *   school staff who work in the app. On a page that both non-staff and
@@ -134,9 +134,9 @@ function Logo({ school, look }: { school: FrameSchool; look: FrameColors["logo"]
  * get the level of a school's first app.
  *
  * - `low`: a very light gray frame around a white page.
- * - `medium`: a light frame in the hue of the main school color, around
+ * - `medium`: a light frame in the hue of the school's primary color, around
  *   a white page.
- * - `high`: the main school color around a white page, with
+ * - `high`: the school's primary color around a white page, with
  *   the logo in white.
  *
  * The selected nav item takes its fill from the frame, so it shows on every
@@ -146,7 +146,7 @@ function Logo({ school, look }: { school: FrameSchool; look: FrameColors["logo"]
  * @example
  * ```tsx
  * <AppFrame
- *   school={{ name: "Northfield University", main: brand.main, logos: brand.logos }}
+ *   school={{ name: "Northfield University", primaryColor: brand.primaryColor, logos: brand.logos }}
  *   step={defaultBrandingStep("staff")}
  *   appName="Admissions dashboard"
  *   nav={
@@ -189,7 +189,7 @@ export function AppFrame({
     return () => observer.disconnect()
   }, [layout])
 
-  const colors = school ? frameColors(school.main, step) : unbrandedFrameColors()
+  const colors = school ? frameColors(school.primaryColor, step) : unbrandedFrameColors()
   const hasLogo = Boolean(school && school.logos.length > 0)
   const logoIn = (look: FrameColors["logo"] = colors.logo) => (school ? <Logo school={school} look={look} /> : null)
   const schoolName = school ? <span className="min-w-0 truncate text-sm font-semibold">{school.name}</span> : null
@@ -201,7 +201,7 @@ export function AppFrame({
         data-slot="app-frame"
         data-layout="plain"
         className="min-h-screen bg-(--frame-page) text-foreground"
-        style={{ "--frame-page": school ? plainPageColor(school.main, step) : colors.page } as CSSProperties}
+        style={{ "--frame-page": school ? plainPageColor(school.primaryColor, step) : colors.page } as CSSProperties}
       >
         {school ? (
           <header className="flex h-14 items-center px-6">
