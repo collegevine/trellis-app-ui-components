@@ -59,6 +59,14 @@ function distance(pixels: Uint8ClampedArray, i: number, color: [number, number, 
   )
 }
 
+function isBackground(pixels: Uint8ClampedArray, i: number, background: [number, number, number]) {
+  return distance(pixels, i, background) <= BACKGROUND_DISTANCE
+}
+
+function isClear(pixels: Uint8ClampedArray, i: number, background: [number, number, number] | null) {
+  return channel(pixels, i + 3) <= CLEAR_ALPHA || (background !== null && isBackground(pixels, i, background))
+}
+
 function solidCorner(pixels: Uint8ClampedArray, width: number, height: number): [number, number, number] | null {
   const corners = [0, width - 1, (height - 1) * width, height * width - 1].map((p) => p * 4)
   const first = corners[0] ?? 0
@@ -73,7 +81,7 @@ function solidCorner(pixels: Uint8ClampedArray, width: number, height: number): 
 
 export function clearBackground(pixels: Uint8ClampedArray, background: [number, number, number]) {
   for (let i = 0; i < pixels.length; i += 4) {
-    if (distance(pixels, i, background) <= BACKGROUND_DISTANCE) pixels[i + 3] = 0
+    if (isBackground(pixels, i, background)) pixels[i + 3] = 0
   }
 }
 
@@ -94,8 +102,7 @@ export function inkBounds(
   for (let y = 0; y < height; y++) {
     for (let x = 0; x < width; x++) {
       const i = (y * width + x) * 4
-      if (channel(pixels, i + 3) <= CLEAR_ALPHA) continue
-      if (background && distance(pixels, i, background) <= BACKGROUND_DISTANCE) continue
+      if (isClear(pixels, i, background)) continue
       ink++
       if (Math.min(channel(pixels, i), channel(pixels, i + 1), channel(pixels, i + 2)) > WHITE_CHANNEL) whiteInk++
       if (Math.max(channel(pixels, i), channel(pixels, i + 1), channel(pixels, i + 2)) < BLACK_CHANNEL) blackInk++
@@ -109,10 +116,6 @@ export function inkBounds(
   const tone: LogoTone =
     whiteInk / ink >= WHITE_SHARE ? "white" : blackInk / ink >= BLACK_SHARE ? "black" : "color"
   return { left, top, right, bottom, background, tone }
-}
-
-function isClear(pixels: Uint8ClampedArray, i: number, background: InkBounds["background"]) {
-  return channel(pixels, i + 3) <= CLEAR_ALPHA || (background !== null && distance(pixels, i, background) <= BACKGROUND_DISTANCE)
 }
 
 const DARK_TAB = "#35363a"
