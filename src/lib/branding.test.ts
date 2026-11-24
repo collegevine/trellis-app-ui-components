@@ -200,10 +200,10 @@ describe("frameColors at the tinted step", () => {
   const schools = [
     ["Northfield blue", "#003da5"],
     ["Redmond red", "#c41230"],
-    ["Sweet Briar pink", "#ed2b74"],
-    ["Columbia light blue", "#b9d9eb"],
-    ["Marshall light green", "#00b140"],
-    ["Michigan Tech gold", "#ffcd00"],
+    ["Lakeshore pink", "#ed2b74"],
+    ["Harbor light blue", "#b9d9eb"],
+    ["Fairview light green", "#00b140"],
+    ["Ridgeline gold", "#ffcd00"],
   ] as const
 
   const hueGap = (first: number, second: number) => {
@@ -211,7 +211,7 @@ describe("frameColors at the tinted step", () => {
     return Math.min(gap, 360 - gap)
   }
 
-  it.each(schools.filter(([name]) => name !== "Michigan Tech gold"))("draws the frame for %s in the hue of the main color", (_, main) => {
+  it.each(schools.filter(([name]) => name !== "Ridgeline gold"))("draws the frame for %s in the hue of the main color", (_, main) => {
     const frame = toOklch(frameColors(main, "medium").frame)
     expect(hueGap(frame.h, toOklch(main).h)).toBeLessThan(6)
   })
