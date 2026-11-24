@@ -32,7 +32,15 @@ export {
   type AppFrameNavLinkProps,
   type AppFrameProps,
 } from "./components/app-frame.js"
-export { unbrandedFrameColors, type FrameColors } from "./lib/branding.js"
+export {
+  readableText,
+  schoolTheme,
+  selectedFill,
+  unbrandedFrameColors,
+  type Fill,
+  type FrameColors,
+  type SchoolColors,
+} from "./lib/branding.js"
 export {
   Tabs,
   TabsContent,
