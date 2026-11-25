@@ -2,9 +2,77 @@
 
 import { act, type ReactElement } from "react"
 import { createRoot, type Root } from "react-dom/client"
+import { renderToStaticMarkup } from "react-dom/server"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
 import { SidePanelLayout, type SidePanelLayoutProps } from "./side-panel-layout.js"
+
+function renderHtml(props: Partial<SidePanelLayoutProps> = {}) {
+  return renderToStaticMarkup(
+    <SidePanelLayout panel={<p>Applicants waiting for review</p>} panelLabel="Review queue" {...props}>
+      <p>Transcript for Jordan Alvarez</p>
+    </SidePanelLayout>
+  )
+}
+
+function tag(html: string, slot: string) {
+  return html.match(new RegExp(`<[a-z]+[^>]*data-slot="${slot}"[^>]*>`))?.[0] ?? ""
+}
+
+function classes(html: string, slot: string) {
+  return tag(html, slot).match(/class="([^"]*)"/)?.[1]?.split(" ") ?? []
+}
+
+describe("SidePanelLayout", () => {
+  it("gives the panel the width that the resize handle sets", () => {
+    expect(classes(renderHtml(), "side-panel")).toContain("lg:w-(--side-panel-width)")
+  })
+
+  it("names the panel for screen readers", () => {
+    const panel = tag(renderHtml(), "side-panel")
+    expect(panel).toMatch(/^<aside/)
+    expect(panel).toContain('aria-label="Review queue"')
+  })
+
+  it("puts the main content first in reading order, so a small screen shows it above the panel", () => {
+    const html = renderHtml({ side: "start" })
+    expect(html.indexOf('data-slot="side-panel-main"')).toBeLessThan(html.indexOf('data-slot="side-panel"'))
+  })
+
+  it("stacks the panel under the main content on a small screen, at full width", () => {
+    const html = renderHtml()
+    expect(classes(html, "side-panel-layout")).toEqual(expect.arrayContaining(["flex", "flex-col", "lg:flex-row"]))
+    expect(classes(html, "side-panel").filter((c) => /^w-/.test(c))).toEqual([])
+  })
+
+  it("shows the panel on the side that the page picks, on a large screen", () => {
+    expect(classes(renderHtml({ side: "start" }), "side-panel")).toContain("lg:order-1")
+    expect(classes(renderHtml({ side: "start" }), "side-panel-main")).toContain("lg:order-3")
+    expect(classes(renderHtml({ side: "end" }), "side-panel-main")).toContain("lg:order-1")
+    expect(classes(renderHtml({ side: "end" }), "side-panel")).toContain("lg:order-3")
+  })
+
+  it("puts the panel after the main content when the page does not pick a side", () => {
+    expect(classes(renderHtml(), "side-panel")).toContain("lg:order-3")
+  })
+
+  it("lets the main content shrink, so long content does not push the panel off the screen", () => {
+    const html = renderHtml()
+    expect(classes(html, "side-panel-main")).toEqual(expect.arrayContaining(["min-w-0", "flex-1"]))
+    expect(classes(html, "side-panel")).toContain("shrink-0")
+  })
+
+  it("adds the classes that a page passes to the layout", () => {
+    expect(classes(renderHtml({ className: "mt-8 gap-8" }), "side-panel-layout")).toEqual(
+      expect.arrayContaining(["mt-8", "gap-8"])
+    )
+  })
+
+  it("does not type check without a panel name", () => {
+    // @ts-expect-error A panel must have a name.
+    renderToStaticMarkup(<SidePanelLayout panel={<p>Queue</p>}>Details</SidePanelLayout>)
+  })
+})
 
 declare global {
   var IS_REACT_ACT_ENVIRONMENT: boolean
@@ -35,10 +103,6 @@ beforeEach(() => {
   })
 })
 
-afterEach(() => {
-  act(() => root.unmount())
-  container.remove()
-})
 
 function render(props: Partial<SidePanelLayoutProps> = {}) {
   return mount(
@@ -88,7 +152,12 @@ function drag(from: number, to: number) {
   pointer("pointerup", to)
 }
 
-describe("SidePanelLayout", () => {
+describe("SidePanelLayout resizing", () => {
+  afterEach(() => {
+    act(() => root.unmount())
+    container.remove()
+  })
+
   it("opens the panel at its default width, inside its bounds", () => {
     render()
     expect(width()).toBe(352)
@@ -223,43 +292,13 @@ describe("SidePanelLayout", () => {
     expect(width()).toBe(352)
   })
 
-  it("puts the main content first in reading order, so a small screen shows it above the panel", () => {
-    render({ side: "start" })
-    const children = [...container.querySelector('[data-slot="side-panel-layout"]')!.children]
-    expect(children.indexOf(main())).toBeLessThan(children.indexOf(panel()))
-  })
 
-  it("stacks the panel under the main content on a small screen, at full width and with no handle", () => {
+  it("hides the handle on a small screen, where the panel takes the full width", () => {
     render()
-    const layout = container.querySelector<HTMLElement>('[data-slot="side-panel-layout"]')!
-    expect(layout.className).toContain("flex-col")
-    expect(layout.className).toContain("lg:flex-row")
-    expect(panel().className).toContain("lg:w-(--side-panel-width)")
-    expect(panel().className).not.toMatch(/(^|\s)w-/)
     expect(handle().className).toMatch(/(^|\s)hidden(\s|$)/)
     expect(handle().className).toContain("lg:flex")
   })
 
-  it("shows the panel on the side that the page picks, on a large screen", () => {
-    render({ side: "start" })
-    expect(panel().className).toContain("lg:order-1")
-    expect(main().className).toContain("lg:order-3")
-    act(() => root.unmount())
-    container.remove()
-    render({ side: "end" })
-    expect(main().className).toContain("lg:order-1")
-    expect(panel().className).toContain("lg:order-3")
-  })
 
-  it("lets the main content shrink, so long content does not push the panel off the screen", () => {
-    render()
-    expect(main().className).toContain("min-w-0")
-    expect(main().className).toContain("flex-1")
-    expect(panel().className).toContain("shrink-0")
-  })
 
-  it("adds the classes that a page passes to the layout", () => {
-    render({ className: "mt-8 gap-8" })
-    expect(container.querySelector('[data-slot="side-panel-layout"]')!.className).toContain("mt-8")
-  })
 })
