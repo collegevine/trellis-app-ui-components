@@ -5,20 +5,20 @@ import { cn } from "../lib/utils.js"
 /**
  * How wide a page's content can grow.
  *
- * - `narrow`: up to 576px (`max-w-xl`). A form, or a flow where a student
+ * - `small`: up to 576px (`max-w-xl`). A form, or a flow where a student
  *   does one task.
- * - `reading`: up to 896px (`max-w-4xl`). A report, a full-page chat, or a
+ * - `medium`: up to 896px (`max-w-4xl`). A report, a full-page chat, or a
  *   conversation.
- * - `standard`: up to 1280px (`max-w-7xl`). A dashboard, a table, or the
+ * - `large`: up to 1280px (`max-w-7xl`). A dashboard, a table, or the
  *   details of one record.
  * - `full`: no limit. A board, or a queue with a detail pane beside it.
  */
-export type ContentColumnWidth = "narrow" | "reading" | "standard" | "full"
+export type ContentColumnWidth = "small" | "medium" | "large" | "full"
 
 const CAPS: Record<ContentColumnWidth, string> = {
-  narrow: "max-w-xl",
-  reading: "max-w-4xl",
-  standard: "max-w-7xl",
+  small: "max-w-xl",
+  medium: "max-w-4xl",
+  large: "max-w-7xl",
   full: "max-w-none",
 }
 
@@ -42,7 +42,7 @@ export type ContentColumnProps = ComponentProps<"div"> & {
  *
  * @example
  * ```tsx
- * <ContentColumn width="standard" className="flex flex-col gap-6 py-6">
+ * <ContentColumn width="large" className="flex flex-col gap-6 py-6">
  *   <h1>Enrollment overview</h1>
  *   …
  * </ContentColumn>
