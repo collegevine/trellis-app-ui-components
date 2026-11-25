@@ -40,3 +40,4 @@ export {
   type ContentColumnProps,
   type ContentColumnWidth,
 } from "./components/content-column.js"
+export { SidePanelLayout, type SidePanelLayoutProps } from "./components/side-panel-layout.js"
