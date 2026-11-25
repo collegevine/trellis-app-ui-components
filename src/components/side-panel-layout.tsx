@@ -80,6 +80,7 @@ export function SidePanelLayout({
 
   function onPointerMove(event: PointerEvent<HTMLDivElement>) {
     if (!drag.current) return
+    if (event.buttons === 0) return endDrag()
     setWidth(clamp(drag.current.width + (event.clientX - drag.current.x) * toward))
   }
 
@@ -137,6 +138,15 @@ export function SidePanelLayout({
           className="w-px bg-border group-hover/handle:w-0.5 group-hover/handle:bg-foreground/30 group-focus-visible/handle:w-0.5 group-focus-visible/handle:bg-ring group-data-resizing/layout:w-0.5 group-data-resizing/layout:bg-foreground/30"
         />
       </div>
+      {resizing && (
+        <div
+          data-slot="side-panel-resize-shield"
+          aria-hidden
+          onPointerMove={onPointerMove}
+          onPointerUp={endDrag}
+          className="fixed inset-0 z-50 cursor-col-resize"
+        />
+      )}
       <aside
         id={panelId}
         aria-label={panelLabel}

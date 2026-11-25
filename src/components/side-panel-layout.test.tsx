@@ -70,12 +70,16 @@ function press(key: string) {
   })
 }
 
-function pointer(type: string, clientX: number) {
-  const event = new MouseEvent(type, { clientX, bubbles: true, button: 0 })
+function pointer(type: string, clientX: number, target: Element = handle(), buttons = type === "pointerup" ? 0 : 1) {
+  const event = new MouseEvent(type, { clientX, bubbles: true, button: 0, buttons })
   Object.defineProperty(event, "pointerId", { value: 7 })
   act(() => {
-    handle().dispatchEvent(event)
+    target.dispatchEvent(event)
   })
+}
+
+function shield() {
+  return container.querySelector<HTMLElement>('[data-slot="side-panel-resize-shield"]')
 }
 
 function drag(from: number, to: number) {
@@ -170,6 +174,26 @@ describe("SidePanelLayout", () => {
     pointer("pointerdown", 400)
     expect(HTMLElement.prototype.setPointerCapture).toHaveBeenCalledWith(7)
     expect(captured.has(7)).toBe(true)
+  })
+
+  it("covers the page while a drag runs, so an embedded frame from another site cannot take the pointer", () => {
+    render({ side: "start" })
+    expect(shield()).toBeNull()
+    pointer("pointerdown", 400)
+    expect(shield()!.className).toContain("fixed inset-0")
+    pointer("pointermove", 480, shield()!)
+    expect(width()).toBe(432)
+    pointer("pointerup", 480, shield()!)
+    expect(shield()).toBeNull()
+  })
+
+  it("stops a drag when a move arrives with no button pressed, such as after a release that the page missed", () => {
+    render({ side: "start" })
+    pointer("pointerdown", 400)
+    pointer("pointermove", 600, handle(), 0)
+    expect(width()).toBe(352)
+    pointer("pointermove", 700)
+    expect(width()).toBe(352)
   })
 
   it("stops a drag when the browser takes the pointer away", () => {
