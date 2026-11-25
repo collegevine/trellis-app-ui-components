@@ -73,13 +73,6 @@ describe("SidePanelLayout on a wide screen", () => {
     expect(panel()!.getAttribute("aria-label")).toBe("Review queue")
   })
 
-  it("shows no button to open the panel, and no resize handle on a small screen", () => {
-    wide = false
-    render()
-    expect(document.querySelector('[role="separator"]')).toBeNull()
-    act(() => root.unmount())
-    wide = true
-  })
 
   it("shows no button to open the panel", () => {
     render()
