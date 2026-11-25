@@ -1,0 +1,163 @@
+"use client"
+
+import {
+  useCallback,
+  useEffect,
+  useId,
+  useRef,
+  useState,
+  type ComponentProps,
+  type CSSProperties,
+  type KeyboardEvent,
+  type PointerEvent,
+  type ReactNode,
+} from "react"
+
+import { cn } from "../lib/utils.js"
+
+const MIN_WIDTH = 256
+const DEFAULT_WIDTH = 352
+const MAX_WIDTH = 576
+const STEP = 16
+
+function clamp(width: number) {
+  return Math.min(MAX_WIDTH, Math.max(MIN_WIDTH, width))
+}
+
+/** Props for {@link SidePanelLayout}. */
+export type SidePanelLayoutProps = Omit<ComponentProps<"div">, "children"> & {
+  /** What the panel holds, such as a list that picks what the main content shows. */
+  panel: ReactNode
+  /** A short name for the panel. Screen readers announce it, and the resize handle uses it. */
+  panelLabel: string
+  /** Which side of the main content the panel sits on, on a large screen. Defaults to `end`. */
+  side?: "start" | "end"
+  /** The main content. */
+  children: ReactNode
+}
+
+/**
+ * A main area with a side panel beside it, which a person can resize.
+ *
+ * The panel opens at 352px and resizes between 256px and 576px, the limit of a
+ * `small` {@link ContentColumn}. A person drags the handle between the panel
+ * and the main content, or focuses the handle and presses the arrow keys (16px
+ * a press), Home (narrowest) or End (widest). A double click on the handle puts
+ * the panel back at its opening width.
+ *
+ * On a screen narrower than 1024px the panel stacks under the main content at
+ * full width, and the handle hides.
+ *
+ * @example
+ * ```tsx
+ * <ContentColumn width="full">
+ *   <SidePanelLayout side="start" panelLabel="Applicants" panel={<ApplicantList />} className="gap-6">
+ *     <ApplicantDetails />
+ *   </SidePanelLayout>
+ * </ContentColumn>
+ * ```
+ */
+export function SidePanelLayout({
+  panel,
+  panelLabel,
+  side = "end",
+  className,
+  style,
+  children,
+  ...props
+}: SidePanelLayoutProps) {
+  const panelId = useId()
+  const [width, setWidth] = useState(DEFAULT_WIDTH)
+  const [resizing, setResizing] = useState(false)
+  const drag = useRef<{ x: number; width: number } | null>(null)
+  const toward = side === "start" ? 1 : -1
+
+  const onMove = useCallback(
+    (event: globalThis.PointerEvent | MouseEvent) => {
+      if (!drag.current) return
+      setWidth(clamp(drag.current.width + (event.clientX - drag.current.x) * toward))
+    },
+    [toward]
+  )
+
+  const onUp = useCallback(() => {
+    drag.current = null
+    setResizing(false)
+  }, [])
+
+  useEffect(() => {
+    if (!resizing) return
+    window.addEventListener("pointermove", onMove)
+    window.addEventListener("pointerup", onUp)
+    window.addEventListener("pointercancel", onUp)
+    return () => {
+      window.removeEventListener("pointermove", onMove)
+      window.removeEventListener("pointerup", onUp)
+      window.removeEventListener("pointercancel", onUp)
+    }
+  }, [resizing, onMove, onUp])
+
+  function onPointerDown(event: PointerEvent<HTMLDivElement>) {
+    if (event.button !== 0) return
+    event.preventDefault()
+    drag.current = { x: event.clientX, width }
+    setResizing(true)
+  }
+
+  function onKeyDown(event: KeyboardEvent<HTMLDivElement>) {
+    const next = {
+      ArrowRight: width + STEP * toward,
+      ArrowLeft: width - STEP * toward,
+      Home: MIN_WIDTH,
+      End: MAX_WIDTH,
+    }[event.key]
+    if (next === undefined) return
+    event.preventDefault()
+    setWidth(clamp(next))
+  }
+
+  return (
+    <div
+      data-slot="side-panel-layout"
+      data-resizing={resizing ? "" : undefined}
+      className={cn("group/layout flex flex-col lg:flex-row lg:items-start data-resizing:select-none", className)}
+      style={{ ...style, "--side-panel-width": `${width}px` } as CSSProperties}
+      {...props}
+    >
+      <div
+        data-slot="side-panel-main"
+        className={cn("min-w-0 flex-1", side === "start" ? "lg:order-3" : "lg:order-1")}
+      >
+        {children}
+      </div>
+      <div
+        role="separator"
+        aria-orientation="vertical"
+        aria-label={`Resize ${panelLabel}`}
+        aria-controls={panelId}
+        aria-valuenow={width}
+        aria-valuemin={MIN_WIDTH}
+        aria-valuemax={MAX_WIDTH}
+        tabIndex={0}
+        onPointerDown={onPointerDown}
+        onKeyDown={onKeyDown}
+        onDoubleClick={() => setWidth(DEFAULT_WIDTH)}
+        data-slot="side-panel-handle"
+        className="group/handle hidden w-4 shrink-0 cursor-col-resize touch-none justify-center self-stretch outline-none lg:order-2 lg:flex"
+      >
+        <span
+          aria-hidden
+          className="w-px bg-border group-hover/handle:w-0.5 group-hover/handle:bg-foreground/30 group-focus-visible/handle:w-0.5 group-focus-visible/handle:bg-ring group-data-resizing/layout:w-0.5 group-data-resizing/layout:bg-foreground/30"
+        />
+      </div>
+      <aside
+        id={panelId}
+        aria-label={panelLabel}
+        data-slot="side-panel"
+        className={cn("min-w-0 shrink-0 lg:w-(--side-panel-width)", side === "start" ? "lg:order-1" : "lg:order-3")}
+      >
+        {panel}
+      </aside>
+    </div>
+  )
+}
