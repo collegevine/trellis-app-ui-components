@@ -2,7 +2,7 @@
 
 import { act, type ReactElement } from "react"
 import { createRoot, type Root } from "react-dom/client"
-import { afterEach, describe, expect, it } from "vitest"
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
 import { SidePanelLayout, type SidePanelLayoutProps } from "./side-panel-layout.js"
 
@@ -21,6 +21,19 @@ function mount(element: ReactElement) {
   act(() => root.render(element))
   return container
 }
+
+const captured = new Set<number>()
+
+beforeEach(() => {
+  captured.clear()
+  HTMLElement.prototype.setPointerCapture = vi.fn(function (this: HTMLElement, id: number) {
+    captured.add(id)
+  })
+  HTMLElement.prototype.hasPointerCapture = vi.fn((id: number) => captured.has(id))
+  HTMLElement.prototype.releasePointerCapture = vi.fn((id: number) => {
+    captured.delete(id)
+  })
+})
 
 afterEach(() => {
   act(() => root.unmount())
@@ -57,16 +70,18 @@ function press(key: string) {
   })
 }
 
-function pointer(type: string, target: EventTarget, clientX: number) {
+function pointer(type: string, clientX: number) {
+  const event = new MouseEvent(type, { clientX, bubbles: true, button: 0 })
+  Object.defineProperty(event, "pointerId", { value: 7 })
   act(() => {
-    target.dispatchEvent(new MouseEvent(type, { clientX, bubbles: true, button: 0 }))
+    handle().dispatchEvent(event)
   })
 }
 
 function drag(from: number, to: number) {
-  pointer("pointerdown", handle(), from)
-  pointer("pointermove", window, to)
-  pointer("pointerup", window, to)
+  pointer("pointerdown", from)
+  pointer("pointermove", to)
+  pointer("pointerup", to)
 }
 
 describe("SidePanelLayout", () => {
@@ -146,17 +161,32 @@ describe("SidePanelLayout", () => {
   it("stops a drag when the pointer is released", () => {
     render({ side: "start" })
     drag(400, 480)
-    pointer("pointermove", window, 600)
+    pointer("pointermove", 600)
     expect(width()).toBe(432)
+  })
+
+  it("keeps the drag on the handle when the pointer passes over an embedded frame, such as a video player", () => {
+    render({ side: "start" })
+    pointer("pointerdown", 400)
+    expect(HTMLElement.prototype.setPointerCapture).toHaveBeenCalledWith(7)
+    expect(captured.has(7)).toBe(true)
+  })
+
+  it("stops a drag when the browser takes the pointer away", () => {
+    render({ side: "start" })
+    pointer("pointerdown", 400)
+    pointer("lostpointercapture", 400)
+    pointer("pointermove", 600)
+    expect(width()).toBe(352)
   })
 
   it("stops text selection on the page while a drag runs", () => {
     render({ side: "start" })
     const layout = container.querySelector<HTMLElement>('[data-slot="side-panel-layout"]')!
-    pointer("pointerdown", handle(), 400)
+    pointer("pointerdown", 400)
     expect(layout.hasAttribute("data-resizing")).toBe(true)
     expect(layout.className).toContain("data-resizing:select-none")
-    pointer("pointerup", window, 400)
+    pointer("pointerup", 400)
     expect(layout.hasAttribute("data-resizing")).toBe(false)
   })
 

@@ -1,8 +1,6 @@
 "use client"
 
 import {
-  useCallback,
-  useEffect,
   useId,
   useRef,
   useState,
@@ -72,36 +70,22 @@ export function SidePanelLayout({
   const drag = useRef<{ x: number; width: number } | null>(null)
   const toward = side === "start" ? 1 : -1
 
-  const onMove = useCallback(
-    (event: globalThis.PointerEvent | MouseEvent) => {
-      if (!drag.current) return
-      setWidth(clamp(drag.current.width + (event.clientX - drag.current.x) * toward))
-    },
-    [toward]
-  )
-
-  const onUp = useCallback(() => {
-    drag.current = null
-    setResizing(false)
-  }, [])
-
-  useEffect(() => {
-    if (!resizing) return
-    window.addEventListener("pointermove", onMove)
-    window.addEventListener("pointerup", onUp)
-    window.addEventListener("pointercancel", onUp)
-    return () => {
-      window.removeEventListener("pointermove", onMove)
-      window.removeEventListener("pointerup", onUp)
-      window.removeEventListener("pointercancel", onUp)
-    }
-  }, [resizing, onMove, onUp])
-
   function onPointerDown(event: PointerEvent<HTMLDivElement>) {
     if (event.button !== 0) return
     event.preventDefault()
+    event.currentTarget.setPointerCapture(event.pointerId)
     drag.current = { x: event.clientX, width }
     setResizing(true)
+  }
+
+  function onPointerMove(event: PointerEvent<HTMLDivElement>) {
+    if (!drag.current) return
+    setWidth(clamp(drag.current.width + (event.clientX - drag.current.x) * toward))
+  }
+
+  function endDrag() {
+    drag.current = null
+    setResizing(false)
   }
 
   function onKeyDown(event: KeyboardEvent<HTMLDivElement>) {
@@ -140,6 +124,9 @@ export function SidePanelLayout({
         aria-valuemax={MAX_WIDTH}
         tabIndex={0}
         onPointerDown={onPointerDown}
+        onPointerMove={onPointerMove}
+        onPointerUp={endDrag}
+        onLostPointerCapture={endDrag}
         onKeyDown={onKeyDown}
         onDoubleClick={() => setWidth(DEFAULT_WIDTH)}
         data-slot="side-panel-handle"
